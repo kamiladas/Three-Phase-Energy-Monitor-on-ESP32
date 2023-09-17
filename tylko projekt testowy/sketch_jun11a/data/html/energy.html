@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Energy Home</title>
+  <style>
+    /* Styl CSS */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+      margin-top: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .chart-container {
+      display: flex;
+      justify-content: space-between;
+    }
+    .chart {
+      flex: 1;
+      margin: 10px;
+      padding: 10px;
+      background-color: #f4f4f4;
+      border-radius: 4px;
+      box-shadow: -1px 3px 24px -6px rgba(67, 90, 66, 1);
+
+
+    }
+    .chart h2 {
+      color: #666;
+    }
+    .chart p {
+      font-size: 24px;
+      color: #333;
+    }
+    .actions {
+      display: flex;
+      justify-content: space-between;
+    }
+    .actions button {
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .actions button:hover {
+      background-color: #555;
+    }
+    .bar-chart {
+      background-color: #2196f3;
+      height: 100px;
+      transition: height 0.5s ease;
+    }
+  </style>
+  <script>
+    // Interakcje
+
+    // Funkcja do odświeżania odczytu licznika energii i aktualizowania wykresów
+    function refreshMeterReading() {
+      // Tutaj można umieścić kod do pobrania aktualnego odczytu z serwera i zaktualizowania go na stronie
+      var currentReading = Math.floor(Math.random() * 10000) + 1000; // Przykładowy kod generujący losowy odczyt
+
+      // Aktualizacja odczytu w elemencie p
+      var readingElement = document.getElementById('meter-reading-value');
+      readingElement.textContent = currentReading + ' kWh';
+
+      // Aktualizacja wykresu słupkowego
+      var barChartElement = document.getElementById('bar-chart');
+      barChartElement.style.height = currentReading / 100 + 'px';
+
+      // Dodawanie nowego słupka na podstawie wartości kWh
+      var chartContainerElement = document.getElementById('chart-container');
+      var newBarElement = document.createElement('div');
+      newBarElement.className = 'chart';
+      newBarElement.innerHTML = `
+        <h2>Wykres słupkowy</h2>
+        <div class="bar-chart" style="height: ${currentReading / 100}px;"></div>
+      `;
+      chartContainerElement.appendChild(newBarElement);
+    }
+
+    // Funkcja do zgłaszania awarii
+    function reportFailure() {
+      // Tutaj można umieścić kod do zgłaszania awarii do odpowiedniego systemu
+      alert('jakaś akcja!');
+    }
+
+    // Funkcja do aktualizowania napięcia L1
+    function updateVoltageL1() {
+      var voltageL1 = Math.floor(Math.random() * 220) + 200; // Przykładowy kod generujący losowe napięcie L1
+      var voltageL1Element = document.getElementById('voltage-l1-value');
+      voltageL1Element.textContent = voltageL1 + ' V';
+    }
+
+    // Funkcja do aktualizowania napięcia L2
+    function updateVoltageL2() {
+      var voltageL2 = Math.floor(Math.random() * 220) + 200; // Przykładowy kod generujący losowe napięcie L2
+      var voltageL2Element = document.getElementById('voltage-l2-value');
+      voltageL2Element.textContent = voltageL2 + ' V';
+    }
+	
+    // Funkcja do aktualizowania napięcia L3
+    function updateVoltageL3() {
+      var voltageL3 = Math.floor(Math.random() * 220) + 200; // Przykładowy kod generujący losowe napięcie L3
+      var voltageL3Element = document.getElementById('voltage-l3-value');
+      voltageL3Element.textContent = voltageL3 + ' V';
+    }
+
+    // Funkcja do aktualizowania prądu L1
+    function updateCurrentL1() {
+      var currentL1 = Math.floor(Math.random() * 20) + 5; // Przykładowy kod generujący losowy prąd L1
+      var currentL1Element = document.getElementById('current-l1-value');
+      currentL1Element.textContent = currentL1 + ' A';
+    }
+
+    // Funkcja do aktualizowania prądu L2
+    function updateCurrentL2() {
+      var currentL2 = Math.floor(Math.random() * 20) + 5; // Przykładowy kod generujący losowy prąd L2
+      var currentL2Element = document.getElementById('current-l2-value');
+      currentL2Element.textContent = currentL2 + ' A';
+    }
+	
+    // Funkcja do aktualizowania prądu L3
+    function updateCurrentL3() {
+      var currentL3 = Math.floor(Math.random() * 20) + 5; // Przykładowy kod generujący losowy prąd L3
+      var currentL3Element = document.getElementById('current-l3-value');
+      currentL3Element.textContent = currentL3 + ' A';
+    }
+
+    function autoRefresh() {
+      refreshMeterReading();   // Odświeżanie odczytu licznika energii
+      updateVoltageL1();       // Odświeżanie napięcia L1
+      updateVoltageL2();       // Odświeżanie napięcia L2
+      updateVoltageL3();       // Odświeżanie napięcia L3
+      updateCurrentL1();       // Odświeżanie prądu L1
+      updateCurrentL2();       // Odświeżanie prądu L2
+      updateCurrentL3();       // Odświeżanie prądu L3
+    }
+
+    // Wywołanie funkcji co 5 sekund
+    setInterval(autoRefresh, 5000);
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Energy Home</h1>
+    <div class="chart-container">
+      <div class="chart">
+        <h2>Aktualny odczyt licznika energii</h2>
+        <p id="meter-reading-value">1,234 kWh</p>
+        <button onclick="refreshMeterReading()">Odśwież</button>
+      </div>
+      <div class="chart">
+        <h2>Wykres słupkowy</h2>
+        <div id="bar-chart"></div>
+      </div>
+    </div>
+    <div class="chart-container">
+      <div class="chart">
+        <h2>Napięcie L1</h2>
+        <p id="voltage-l1-value">220 V</p>
+        <button onclick="updateVoltageL1()">Aktualizuj</button>
+      </div>
+	  <div class="chart">
+        <h2>Prąd L1</h2>
+        <p id="current-l1-value">10 A</p>
+        <button onclick="updateCurrentL1()">Aktualizuj</button>
+      </div>
+    </div>
+    <div class="chart-container">
+	<div class="chart">
+        <h2>Napięcie L2</h2>
+        <p id="voltage-l2-value">220 V</p>
+        <button onclick="updateVoltageL2()">Aktualizuj</button>
+      </div>
+	  <div class="chart">
+        <h2>Prąd L2</h2>
+        <p id="current-l2-value">10 A</p>
+        <button onclick="updateCurrentL2()">Aktualizuj</button>
+      </div>
+      
+    </div>
+	
+    <div class="chart-container">
+	<div class="chart">
+        <h2>Napięcie L3</h2>
+        <p id="voltage-l3-value">220 V</p>
+        <button onclick="updateVoltageL3()">Aktualizuj</button>
+      </div>
+      <div class="chart">
+        <h2>Prąd L3</h2>
+        <p id="current-l3-value">10 A</p>
+        <button onclick="updateCurrentL3()">Aktualizuj</button>
+      </div>
+    </div>
+    <div class="actions">
+      <button onclick="reportFailure()">jakaś akcja</button>
+    </div>
+  </div>
+</body>
+</html>

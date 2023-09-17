@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wykres z pliku CSV</title>
+    <style>
+        /* Dodajmy trochę stylów dla estetyki */
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        canvas {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Wykres na podstawie pliku CSV</h1>
+
+    <canvas id="myChart" width="400" height="200"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Funkcja do wczytania danych z pliku CSV
+        function loadCSV() {
+            fetch('/Phase1_data.csv') // Zmieniona ścieżka do serwera
+                .then(response => response.text())
+                .then(data => processData(data))
+                .catch(error => console.error('Błąd podczas wczytywania pliku CSV:', error));
+        }
+function processData(csvData) {
+    const rows = csvData.trim().split('\n');
+    const header = rows.shift().split(',');
+    const data = rows.map(row => {
+        const values = row.split(',');
+        const obj = {};
+        header.forEach((column, index) => {
+            obj[column] = values[index];
+        });
+
+        // Sprawdzenie, czy kolumna 'Moc bierna (VA)' istnieje w danych
+        if ('Moc' in obj) {
+            // Usunięcie zbędnych znaków i zamiana na liczbę
+            const powerValue = obj['Moc'];
+            obj['Moc'] = parseFloat(powerValue.replace(/[^\d.-]/g, ''));
+        }
+
+        return obj;
+    });
+
+    // Wyświetlenie danych z kolumny 'Moc bierna (VA)' w konsoli
+    const powerValues = data.map(row => row['Moc']);
+    console.log(powerValues);
+
+    generateChart(data);
+}
+
+
+        // Funkcja do generowania wykresu
+        // Funkcja do generowania wykresu słupkowego
+function generateChart(data) {
+    const labels = data.map(row => row['Godzina']);
+    const powerValues = data.map(row => parseFloat(row['Napięcie']));
+
+    const ctx = document.getElementById('myChart').getContext('2d');
+    const myChart = new Chart(ctx, {
+        type: 'bar', // Używamy wykresu słupkowego
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'VA',
+                data: powerValues,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)', // Kolor tła słupków (niebieski)
+                borderWidth: 1,
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true, // Oś Y zaczyna się od 0
+					suggestedMin: 0, // Sugerowana wartość minimalna
+                    suggestedMax: 900, // Sugerowana wartość maksymaln
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const dataIndex = context.dataIndex;
+                            const datasetIndex = context.datasetIndex;
+                            const dataRow = data[dataIndex];
+                            const voltage = dataRow['Napięcie'];
+                            const current = dataRow['Prąd'];
+                            return `Napięcie: ${voltage}, Prąd: ${current}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+        // Wywołaj funkcję wczytującą plik CSV po załadowaniu strony
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCSV();
+        });
+    </script>
+</body>
+</html>

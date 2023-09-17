@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <canvas id="canvas"></canvas>
+    <script>
+      let canvas, ctx, wave, time;
+
+      window.onload = () => {
+        canvas = document.getElementById("canvas");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        ctx = canvas.getContext("2d");
+
+        wave = {
+          y: window.innerHeight / 2,
+          length: 200000,
+          amplitude: 80,
+          frequency: 0.02 * 3 // Zwiększona prędkość
+        };
+
+        time = 0;
+
+        window.requestAnimationFrame(animation);
+      };
+
+      function animation(timestamp) {
+        window.requestAnimationFrame(animation);
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.beginPath();
+        ctx.moveTo(0, wave.y);
+
+        // Creating a gradient from red to yellow
+        const gradient = ctx.createLinearGradient(
+          0,
+          0,
+          window.innerWidth,
+          0
+        );
+        gradient.addColorStop(0, "green");
+        gradient.addColorStop(1, "yellow");
+
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 3;
+
+        // Drawing the waves
+        for (let i = 0; i < window.innerWidth; i++) {
+          const x = i;
+          const y =
+            wave.y +
+            Math.sin(x * wave.length + time * wave.frequency) *
+              wave.amplitude;
+          ctx.lineTo(x, y);
+        }
+
+        ctx.stroke();
+
+        time += 1;
+      }
+    </script>
+  </body>
+</html>

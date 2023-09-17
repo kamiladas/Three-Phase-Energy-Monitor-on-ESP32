@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Error</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      color: #333333;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Błąd</h2>
+    <p>Podane hasło jest nieprawidłowe.</p>
+    <p>Zostaniesz przekierowany na stronę konfiguracji za 5 sekund...</p>
+  </div>
+
+  <script>
+    setTimeout(function() {
+      window.location.href = "/configure";
+    }, 5000);
+  </script>
+</body>
+</html>
