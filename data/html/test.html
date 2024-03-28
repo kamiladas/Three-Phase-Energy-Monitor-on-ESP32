@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wykres z danych CSV</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        canvas {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Wykres napięcia RMS na podstawie danych CSV</h1>
+    <canvas id="myChart" width="400" height="200"></canvas>
+    <div id="log"></div> <!-- Kontener na logi -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let combinedCsvData = ''; // Zmienna do skumulowania danych CSV
+
+        function logMessage(message) {
+            const logContainer = document.getElementById('log');
+            logContainer.innerHTML += message + '<br>';
+        }
+
+        function downloadFile(folderName, fileName) {
+            let filePath = `/main_data/${folderName}/${fileName}`;
+            fetch(`/download?file=${filePath}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('File not found: ' + filePath);
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    console.log("Plik pobrany: " + filePath);
+                    combinedCsvData += data + "\n";
+                    logMessage(`Pobrano plik: ${filePath}`);
+                    processData(combinedCsvData);
+                })
+                .catch(error => {
+                    logMessage(`Błąd: ${error.message}`);
+                });
+        }
+
+        function processFileList(fileList) {
+            const hourlyFileNames = ["01_00.csv", "02_00.csv", "03_00.csv", "04_00.csv", "05_00.csv", "06_00.csv", "07_00.csv", "08_00.csv", "09_00.csv", "10_00.csv", "11_00.csv", "12_00.csv", "13_00.csv", "14_00.csv", "15_00.csv", "16_00.csv", "17_00.csv", "18_00.csv", "19_00.csv", "20_00.csv", "21_00.csv", "22_00.csv", "23_00.csv", "00_00.csv"];
+            
+            fileList.forEach(file => {
+                let folderName = file.name;
+                hourlyFileNames.forEach(hourlyFileName => {
+                    downloadFile(folderName, hourlyFileName);
+                });
+            });
+        }
+
+        function getFileList() {
+            fetch('/filelist')
+                .then(response => response.json())
+                .then(data => {
+                    processFileList(data);
+                })
+                .catch(error => logMessage('Error: ' + error));
+        }
+
+        function processData(csvData) {
+            const rows = csvData.trim().split('\n');
+            const header = rows.shift().split(',');
+            const data = rows.map(row => {
+                const values = row.split(',');
+                const obj = {};
+                header.forEach((column, index) => {
+                    obj[column] = values[index];
+                });
+                return obj;
+            });
+
+            generateChart(data);
+        }
+
+        function generateChart(data) {
+            const labels = data.map(row => row['Time Phase1']);
+            const voltagePhase1 = data.map(row => row['Voltage RMS Phase1']);
+            const voltagePhase2 = data.map(row => row['Voltage RMS Phase2']);
+            const voltagePhase3 = data.map(row => row['Voltage RMS Phase3']);
+
+            const ctx = document.getElementById('myChart').getContext('2d');
+            const myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Napięcie RMS Faza 1',
+                            data: voltagePhase1,
+                            borderColor: 'red',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Napięcie RMS Faza 2',
+                            data: voltagePhase2,
+                            borderColor: 'green',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Napięcie RMS Faza 3',
+                            data: voltagePhase3,
+                            borderColor: 'blue',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            getFileList();
+        });
+    </script>
+</body>
+</html>

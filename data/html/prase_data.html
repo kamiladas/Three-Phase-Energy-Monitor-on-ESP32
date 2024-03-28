@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1024">
+    <title>Wykres z danych CSV</title>
+    <style>
+        nav {
+             display: flex;
+    justify-content: space-around;
+    background-color: #333;
+    padding: 0.5em 0; /* Adjusted to remove horizontal padding */
+    margin: 0; /* Ensure there's no default margin */
+    width: 100%; /* Set nav to take full width */
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2em;
+            padding: 10px;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+            background-color: #555;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+			justify-content: center;
+        }
+
+        h1 {
+            color: #4CAF50;
+            margin: 20px 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 60%;
+        }
+
+        .form-group {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        label {
+            margin-right: 10px;
+        }
+
+        select, input[type="checkbox"], button {
+            margin: 5px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            background-color: #388E3C;
+            box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        canvas {
+			max-width: 70%;
+			margin-top: -20%;
+			max-height: 60%
+        }
+
+        #log {
+            width: 100%;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #fafafa;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            height: 100px;
+            overflow-y: auto;
+        }
+
+       
+		.chart-container {
+    width: 85%; /* Adjust the width as necessary */
+    margin: 5px; /* Centers the container with a margin top and bottom */
+    position: relative; /* Needed to position the canvas absolutely inside the container */
+	flex: 1; /* This will allow the chart container to grow and take up available space */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#myChart {
+    width: 100%;
+    height: 10%;
+    top: 0;
+    left: 0;
+}
+
+/* Maintain aspect ratio */
+.chart-container::before {
+    content: "";
+    display: block;
+    padding-top: 56.25%; /* Percentage based on aspect ratio */
+	position: center;
+}
+
+
+#log {
+    display: none;
+    position: fixed; /* Fixed position to stick it to the bottom */
+    bottom: 0; /* Align to the bottom */
+    left: 0; /* Align to the left */
+    right: 0; /* Align to the right */
+    margin: 0; /* Remove margin */
+    padding: 0.5em; /* Add some padding inside */
+    background-color: #fff; /* Optional: Change background color for visibility */
+    border-top: 1px solid #ccc; /* Add a border on top for some visual separation */
+    z-index: 10; /* Ensure it's above other content */
+}
+
+
+}
+
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/prasedata">Statystyki</a>
+        <a href="/energy">Home</a>
+        <a href="#">Kontakt</a>
+    </nav>
+
+    <h1>Wykres danych CSV</h1>
+    <div>
+        <label for="dataChoice">Wybierz typ danych:</label>
+        <select id="dataChoice">
+            <option value="Voltage">[V] RMS</option>
+            <option value="Current">[I] RMS</option>
+            <option value="Realpower">[kW] Moc chwilowa</option>
+            <option value="powerfactor">[cos(φ)]</option>
+            <option value="EnergyConsuption">[kWh]</option>
+        </select>
+    </div>
+    <div>
+        <input type="checkbox" id="showPhase1" checked>
+        <label for="showPhase1">Faza 1</label><br>
+        <input type="checkbox" id="showPhase2" checked>
+        <label for="showPhase2">Faza 2</label><br>
+        <input type="checkbox" id="showPhase3" checked>
+        <label for="showPhase3">Faza 3</label><br>
+        <button id="showAll">Pokaż wszystkie dane</button>
+        <button id="showMonthly">Pokaż dane co 1 miesiąc</button>
+        <button id="showDaily">Pokaż dane co 1 dzień</button>
+        <button id="showWeekly">Pokaż dane co 1 tydzień</button>
+    </div>
+	
+      <div class="chart-container">
+     <canvas id="myChart"></canvas>
+	 </div>
+	 
+	 <div id="log"></div> <!-- Kontener na logi -->
+		
+ 
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let combinedCsvData = ''; // Zmienna do skumulowania danych CSV
+        let myChart = null; // Zmienna dla wykresu Chart.js
+        let processedData; // Przechowuje przetworzone dane
+
+        function logMessage(message) {
+            const logContainer = document.getElementById('log');
+            logContainer.innerHTML += message + '<br>';
+        }
+	function destroyChart() {
+    if (myChart) {
+        myChart.destroy();
+        myChart = null; // Dodaj to, aby zresetować zmienną po zniszczeniu wykresu
+    }
+}
+
+async function downloadFile(folderName, fileName) {
+    let filePath = `/main_data/${folderName}/${fileName}`;
+    try {
+        //const response = await fetch(`/download?file=${filePath}`);
+		const response = await fetch(`/display`); //plik demo
+        if (!response.ok) {
+            throw new Error('File not found: ' + filePath);
+        }
+        const data = await response.text();
+        console.log("Plik pobrany: " + filePath);
+        combinedCsvData += data + "\n";
+        logMessage(`Pobrano plik: ${filePath}`);
+		filesDownloaded+=1;
+        processData(combinedCsvData);
+    } catch (error) {
+        logMessage(`Błąd: ${error.message}`);
+    }
+}
+let filesDownloaded = 0; // Counter for downloaded files
+
+       async function processFileList(fileList) {
+    const hourlyFileNames = [
+        "01_00.csv", "02_00.csv", "03_00.csv", "04_00.csv", "05_00.csv",
+        "06_00.csv", "07_00.csv", "08_00.csv", "09_00.csv", "10_00.csv",
+        "11_00.csv", "12_00.csv", "13_00.csv", "14_00.csv", "15_00.csv",
+        "16_00.csv", "17_00.csv", "18_00.csv", "19_00.csv", "20_00.csv",
+        "21_00.csv", "22_00.csv", "23_00.csv", "00_00.csv"
+    ];
+   for (const file of fileList) {
+        let folderName = file.name;
+        for (const hourlyFileName of hourlyFileNames) {
+            if (filesDownloaded >= 1) {
+                logMessage("Limit pobranych plików osiągnięty. Funkcja zatrzymana.");
+				generateChart(processedData,1);
+                return; // Zatrzymaj funkcję, jeśli pobrano 3 pliki
+            }
+            await downloadFile(folderName, hourlyFileName);
+        }
+    }
+}
+
+
+        function getFileList() {
+            fetch('/filelist')
+                .then(response => response.json())
+                .then(data => {
+                    processFileList(data);
+                })
+                .catch(error => logMessage('Error: ' + error));
+        }
+		
+		
+
+      function processData(csvData) {
+    if (!csvData) {
+        console.error("No data provided");
+        return;
+    }
+
+    const rows = csvData.trim().split('\n');
+    if (rows.length === 0) {
+        console.error("No data rows found");
+        return;
+    }
+
+    const header = rows.shift().split(',');
+    if (header.length === 0) {
+        console.error("No header found");
+        return;
+    }
+
+    let data = rows.map(row => {
+        const values = row.split(',');
+        if (values.length !== header.length) {
+            console.error(`Row length mismatch. Expected ${header.length} but found ${values.length}`);
+            return null; // Skip this row
+        }
+        const obj = {};
+        header.forEach((column, index) => {
+            obj[column.trim()] = values[index].trim();
+        });
+        return obj;
+    }).filter(row => row !== null); // Remove null rows
+
+    data = data.map(row => ({
+        ...row,
+        dateObject: new Date(row['Time Phase1'])
+    })).sort((a, b) => a.dateObject - b.dateObject);
+
+    processedData = data;
+    //generateChart(processedData,1);
+}
+
+
+		function generateChart(data) {
+    const labels = data.map(row => row['Time Phase1']);
+
+    const datasets = [];
+    if (document.getElementById('showPhase1').checked) {
+        const phase1Data = data.map(row => parseFloat(row['Voltage RMS Phase1']));
+        datasets.push({ label: 'V RMS Faza 1', data: phase1Data, borderColor: 'red', borderWidth: 2 });
+    }
+    if (document.getElementById('showPhase2').checked) {
+        const phase2Data = data.map(row => parseFloat(row['Voltage RMS Phase2']));
+        datasets.push({ label: 'V RMS Faza 2', data: phase2Data, borderColor: 'green', borderWidth: 2 });
+    }
+    if (document.getElementById('showPhase3').checked) {
+        const phase3Data = data.map(row => parseFloat(row['Voltage RMS Phase3']));
+        datasets.push({ label: 'V RMS Faza 3', data: phase3Data, borderColor: 'blue', borderWidth: 2 });
+    }
+
+    const ctx = document.getElementById('myChart').getContext('2d');
+    if (myChart) {
+        myChart.destroy();
+    }
+
+    myChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: datasets },
+        options: {
+		
+			responsive: true, // Sprawia, że wykres jest responsywny
+        maintainAspectRatio: false, // Wyłącza stały stosunek wymiarów
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    suggestedMin: 0,
+                   
+                }
+            }
+        }
+    });
+}
+
+
+		
+		function generateChart2(data) {
+    const labels = data.map(row => row['Time Phase1']);
+
+    const datasets = [];
+    if (document.getElementById('showPhase1').checked) {
+        const phase1Data = data.map(row => parseFloat(row['Current RMS Phase1']));
+        datasets.push({ label: 'Prąd RMS Faza 1', data: phase1Data, borderColor: 'red', borderWidth: 2 });
+    }
+    if (document.getElementById('showPhase2').checked) {
+        const phase2Data = data.map(row => parseFloat(row['Current RMS Phase2']));
+        datasets.push({ label: 'Prąd RMS Faza 2', data: phase2Data, borderColor: 'green', borderWidth: 2 });
+    }
+    if (document.getElementById('showPhase3').checked) {
+        const phase3Data = data.map(row => parseFloat(row['Current RMS Phase3']));
+        datasets.push({ label: 'Prąd RMS Faza 3', data: phase3Data, borderColor: 'blue', borderWidth: 2 });
+    }
+
+    const ctx = document.getElementById('myChart').getContext('2d');
+    if (myChart) {
+        myChart.destroy();
+    }
+
+    myChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: datasets },
+        options: {
+		
+	    responsive: true, // Sprawia, że wykres jest responsywny
+        maintainAspectRatio: false, // Wyłącza stały stosunek wymiarów
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    suggestedMin: 0,
+                   
+                }
+            }
+        }
+    });
+}
+
+		
+   function generateChart3(data) {
+            const labels = data.map(row => row['Time Phase1']);
+
+            const datasets = [];
+            if (document.getElementById('showPhase1').checked) {
+                const phase1Data = data.map(row => parseFloat(row['Real Power Phase1']));
+                datasets.push({ label: 'Moc chwilowa Faza 1', data: phase1Data, borderColor: 'red', borderWidth: 2 });
+            }
+            if (document.getElementById('showPhase2').checked) {
+                const phase2Data = data.map(row => parseFloat(row['Real Power Phase2']));
+                datasets.push({ label: 'Moc chwilowa Faza 2', data: phase2Data, borderColor: 'green', borderWidth: 2 });
+            }
+            if (document.getElementById('showPhase3').checked) {
+                const phase3Data = data.map(row => parseFloat(row['Real Power Phase3']));
+                datasets.push({ label: 'Moc chwilowa Faza 3', data: phase3Data, borderColor: 'blue', borderWidth: 2 });
+            }
+
+            const ctx = document.getElementById('myChart').getContext('2d');
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: labels, datasets: datasets },
+                options: {
+					responsive: true, // Sprawia, że wykres jest responsywny
+					maintainAspectRatio: false, // Wyłącza stały stosunek wymiarów
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            
+                            
+                        }
+                    }
+                }
+            });
+        }	
+
+		
+		  function generateChart4(data) {
+            const labels = data.map(row => row['Time Phase1']);
+
+            const datasets = [];
+            if (document.getElementById('showPhase1').checked) {
+                const phase1Data = data.map(row => parseFloat(row['Power Factor Phase1']));
+                datasets.push({ label: 'cos(φ) Faza 1', data: phase1Data, borderColor: 'red', borderWidth: 2 });
+            }
+            if (document.getElementById('showPhase2').checked) {
+                const phase2Data = data.map(row => parseFloat(row['Power Factor Phase2']));
+                datasets.push({ label: 'cos(φ) Faza 2', data: phase2Data, borderColor: 'green', borderWidth: 2 });
+            }
+            if (document.getElementById('showPhase3').checked) {
+                const phase3Data = data.map(row => parseFloat(row['Power Factor Phase3']));
+                datasets.push({ label: 'cos(φ) Faza 3', data: phase3Data, borderColor: 'blue', borderWidth: 2 });
+            }
+
+            const ctx = document.getElementById('myChart').getContext('2d');
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: labels, datasets: datasets },
+                options: {
+				
+						responsive: true, // Sprawia, że wykres jest responsywny
+						maintainAspectRatio: false, // Wyłącza stały stosunek wymiarów
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            suggestedMin: 0,
+							suggestedMax: 1.2,
+                            
+                        }
+                    }
+                }
+            });
+        }		
+		
+		
+		
+		
+		
+function generateChart5(data) {
+    const labels = []; // Etykiety dla osi X
+    const energyDataPhase1 = [0]; // Inicjalizacja z pierwszym pomiarem równym 0
+    const energyDataPhase2 = [0]; // Inicjalizacja z pierwszym pomiarem równym 0
+    const energyDataPhase3 = [0]; // Inicjalizacja z pierwszym pomiarem równym 0
+	const totalEnergyData = [0];	
+    for (let i = 1; i < data.length; i++) {
+        // Dodajemy etykietę czasu dla każdego pomiaru
+        labels.push(data[i]['Time Phase1'] || `Brak danych ${i}`);
+
+        // Jeśli istnieją dane, przekształcamy czas na obiekty Date
+        const time1Current = data[i]['Time Phase1'] ? new Date(data[i]['Time Phase1']) : null;
+        const time2Current = data[i]['Time Phase2'] ? new Date(data[i]['Time Phase2']) : null;
+        const time3Current = data[i]['Time Phase3'] ? new Date(data[i]['Time Phase3']) : null;
+
+        // Jeśli mamy poprzedni i bieżący czas, obliczamy różnicę
+        let timeDiffPhase1 = 0;
+        let timeDiffPhase2 = 0;
+        let timeDiffPhase3 = 0;
+
+        if (time1Current && data[i - 1]['Time Phase1']) {
+            const time1Previous = new Date(data[i - 1]['Time Phase1']);
+            timeDiffPhase1 = (time1Current - time1Previous) / (1000 * 60 * 60);
+        }
+        if (time2Current && data[i - 1]['Time Phase2']) {
+            const time2Previous = new Date(data[i - 1]['Time Phase2']);
+            timeDiffPhase2 = (time2Current - time2Previous) / (1000 * 60 * 60);
+        }
+        if (time3Current && data[i - 1]['Time Phase3']) {
+            const time3Previous = new Date(data[i - 1]['Time Phase3']);
+            timeDiffPhase3 = (time3Current - time3Previous) / (1000 * 60 * 60);
+        }
+
+        // Obliczanie energii dla każdej fazy
+        const realPowerPhase1 = data[i]['Real Power Phase1'] ? parseFloat(data[i]['Real Power Phase1']) / 1000 : 0; // Moc w kW
+		const realPowerPhase2 = data[i]['Real Power Phase2'] ? parseFloat(data[i]['Real Power Phase2']) / 1000 : 0; // Moc w kW
+		const realPowerPhase3 = data[i]['Real Power Phase3'] ? parseFloat(data[i]['Real Power Phase3']) / 1000 : 0; // Moc w kW
+
+        // Akumulowanie energii
+        const accumulatedEnergyPhase1 = energyDataPhase1[i - 1] + timeDiffPhase1 * realPowerPhase1;
+        const accumulatedEnergyPhase2 = energyDataPhase2[i - 1] + timeDiffPhase2 * realPowerPhase2;
+        const accumulatedEnergyPhase3 = energyDataPhase3[i - 1] + timeDiffPhase3 * realPowerPhase3;
+		const totalEnergy = accumulatedEnergyPhase1 + accumulatedEnergyPhase2 + accumulatedEnergyPhase3;
+		  
+   
+   
+		totalEnergyData.push(totalEnergy);
+        energyDataPhase1.push(accumulatedEnergyPhase1);
+        energyDataPhase2.push(accumulatedEnergyPhase2);
+        energyDataPhase3.push(accumulatedEnergyPhase3);
+		console.log(accumulatedEnergyPhase1); 
+    }
+
+    // Tworzenie wykresu
+    const ctx = document.getElementById('myChart').getContext('2d');
+    if (myChart) {
+        myChart.destroy();
+    }
+
+myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [
+            {
+                label: 'Zużycie energii Faza 1 (kWh)',
+                data: energyDataPhase1.map(x => Number(x.toFixed(5))),
+                borderColor: 'red',
+                borderWidth: 2,
+                fill: false
+            },
+            {
+                label: 'Zużycie energii Faza 2 (kWh)',
+                data: energyDataPhase2.map(x => Number(x.toFixed(5))),
+                borderColor: 'green',
+                borderWidth: 2,
+                fill: false
+            },
+            {
+                label: 'Zużycie energii Faza 3 (kWh)',
+                data: energyDataPhase3.map(x => Number(x.toFixed(5))),
+                borderColor: 'blue',
+                borderWidth: 2,
+                fill: false
+            }
+			,
+			  {
+                label: 'Całkowite zużycie energii (kWh)',
+                data: totalEnergyData.map(x => Number(x.toFixed(5))),
+                borderColor: 'purple',
+                borderWidth: 2,
+                fill: false
+				}
+            
+        ]
+    },
+    options: {
+	
+	
+		responsive: true, // Sprawia, że wykres jest responsywny
+        maintainAspectRatio: false, // Wyłącza stały stosunek wymiarów
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value, index, values) {
+                        return value.toFixed(5); // Formatuje etykiety osi Y do 5 miejsc po przecinku
+                    }
+                }
+            }
+        },
+        tooltips: {
+            callbacks: {
+                label: function(tooltipItem, data) {
+                    let label = data.datasets[tooltipItem.datasetIndex].label || '';
+
+                    if (label) {
+                        label += ': ';
+                    }
+                    label += Number(tooltipItem.yLabel).toFixed(5);
+                    return label;
+                }
+            }
+        }
+    }
+});
+}
+
+
+
+		
+		
+
+       document.getElementById('dataChoice').addEventListener('change', function() {
+    // Sprawdzenie, czy wybrana wartość to "Voltage"
+		if (this.value === "Voltage") {
+        generateChart(processedData,20);
+									}
+		if (this.value === "Current") {
+		generateChart2(processedData);
+									}
+								
+		
+		if (this.value === "Realpower") {
+		generateChart3(processedData);
+									}
+									
+		if (this.value === "powerfactor") {
+		generateChart4(processedData);
+									}
+									
+		
+		
+		if (this.value === "EnergyConsuption") {
+		generateChart5(processedData);
+									}
+									
+		});
+		
+		
+document.getElementById('dataChoice').addEventListener('change', function() {
+    if (this.value === "Voltage") {
+        ['showPhase1', 'showPhase2', 'showPhase3'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => generateChart(processedData));
+        });
+    }  
+    if (this.value === "Current") {
+        ['showPhase1', 'showPhase2', 'showPhase3'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => generateChart2(processedData));
+        });
+    }
+    if (this.value === "Realpower") {
+        ['showPhase1', 'showPhase2', 'showPhase3'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => generateChart3(processedData));
+        });
+    }
+	
+	if (this.value === "powerfactor") {
+        ['showPhase1', 'showPhase2', 'showPhase3'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => generateChart4(processedData));
+        });
+	
+    }
+	
+	
+	
+	
+});
+
+document.getElementById('showAll').addEventListener('click', function() {
+	 destroyChart();
+    generateChart(processedData, 'all');
+});
+
+document.getElementById('showMonthly').addEventListener('click', function() {
+	 destroyChart();
+    generateChart(processedData, 'monthly');
+});
+
+document.getElementById('showDaily').addEventListener('click', function() {
+     destroyChart();
+	generateChart(processedData, 'daily');
+});
+
+document.getElementById('showWeekly').addEventListener('click', function() {
+     destroyChart();
+	generateChart(processedData, 'weekly');
+});
+        document.addEventListener('DOMContentLoaded', function() {
+            getFileList();
+        });
+		
+		
+		function resetCanvas() {
+    // Usunięcie istniejącego canvas z DOM
+    const canvasContainer = document.getElementById('canvas-container');
+    const oldCanvas = document.getElementById('myChart');
+    if (oldCanvas) {
+        canvasContainer.removeChild(oldCanvas);
+    }
+
+    // Stworzenie nowego canvas i dodanie go do DOM
+    const newCanvas = document.createElement('canvas');
+    newCanvas.id = 'myChart';
+    canvasContainer.appendChild(newCanvas);
+
+    // Zresetowanie globalnej zmiennej wykresu
+    if (myChart) {
+        myChart.destroy();
+    }
+    myChart = null;
+}
+
+
+
+
+let resizeTimeout; // Globalna zmienna do kontroli odświeżania wykresu
+
+window.addEventListener('resize', function() {
+    // Czyść poprzedni timer
+    clearTimeout(resizeTimeout);
+
+    // Ustaw nowy timer
+    resizeTimeout = setTimeout(function() {
+        // Tutaj możesz umieścić logikę odpowiedzialną za skalowanie wykresu
+        if (myChart) {
+            myChart.resize();
+        }
+    }, 250); // Czas oczekiwania w milisekundach
+});
+    </script>
+</body>
+</html>

@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy Home</title>
+    <style>
+	input, textarea {
+  caret-color: white; /* Zakładając, że tło pola tekstowego jest białe */
+}
+
+.hero {
+    background: linear-gradient(to bottom, #4CAF50, #388E3C);
+    color: white;
+    text-align: center;
+    padding: 3em 0;
+	position: relative;
+}
+
+/* Styl treści nagłówka */
+.hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.hero h1 {
+    font-size: 2.5em;
+    margin-bottom: 0.5em;
+}
+
+.hero p {
+    font-size: 1.2em;
+}
+@keyframes fillUnfillRotate {
+  0%, 100% {
+    transform: rotate(0deg);
+    border-top-color: #008000; /* Jasnozielony */
+  }
+  15% {
+    transform: rotate(180deg);
+    border-top-color: #008000; /* Zielony */
+  }
+  30% {
+    transform: rotate(120deg);
+    border-top-color: #006400; /* Ciemnozielony */
+  }
+  45% {
+    transform: rotate(240deg);
+    border-top-color: #008000; /* Zielony */
+  }
+  60% {
+    transform: rotate(160deg);
+    border-top-color: #006400; /* Ciemnozielony */
+  }
+  75% {
+    transform: rotate(200deg);
+    border-top-color: #008000; /* Zielony */
+  }
+  85% {
+    transform: rotate(360deg);
+    border-top-color: #008000; /* Jasnozielony */
+  }
+}
+
+
+
+.loader-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+}
+
+.loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 8px solid #ccc;
+  border-top: 8px solid #1e90ff; /* Niebieski kolor kojarzący się z energią elektryczną */
+  animation: fillUnfillRotate 15s cubic-bezier(.68, -.55, .27, 1.55) infinite;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 1em 0;
+        }
+
+nav {
+    display: flex;
+    justify-content: space-around;
+    background-color: #333;
+    padding: 0.5em;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2em;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            padding: 2em;
+            margin: 0 auto;
+            max-width: 800px;
+        }
+
+        .chart-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* Odstęp między ramkami */
+	margin-left: 3%;
+    margin-right: 3%;
+}
+
+.chart {
+    flex: 1;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0px 0px 15px 1px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    margin-bottom: 10px; /* Dodatkowy odstęp pionowy */
+}
+		
+.expanded {
+  transform: scale(1.2); /* Powiększenie elementu */
+  z-index: 1010;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  background-color: white;
+  transition: transform 0.5s ease-in-out; /* Dodaj transition */
+}ground-color: white;
+}
+
+        .chart h2 {
+            color: #555;
+        }
+
+        .chart p {
+            font-size: 1.5em;
+            color: #333;
+        }
+
+        .actions {
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        .bar-chart {
+            width: 100%;
+            height: 30px;
+            background-color: #76c7c0;
+            transition: height 0.5s ease;
+            margin: 10px 0;
+        }
+		#meter-reading-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  font-size: 1.2em;
+  color: #333;
+}
+
+        .dot-container {
+            display: 10xp;
+            justify-content: center;
+            align-items: center;
+            height: 10vh;
+        }
+
+        .dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            animation: moveDot 4s linear infinite alternate, colorChange 10s linear infinite;
+        }
+
+        @keyframes moveDot {
+            0% {
+                left: calc(-20px);
+                top: calc(50% + 50px * sin(2 * pi * 1 * var(--t)));
+            }
+            100% {
+                left: calc(100% + 20px);
+                top: calc(50% + 50px * sin(2 * pi * 1 * var(--t) + pi/2));
+            }
+        }
+
+        @keyframes colorChange {
+            0% {
+                background: #008000;
+            }
+            20% {
+                background: #FFD700; /* Kolor związany z energią (np. żółty) */
+            }
+            40% {
+                background: #FFA500; /* Inny kolor związany z energią (np. pomarańczowy) */
+            }
+            60% {
+                background: #FF4500; /* Kolejny kolor związany z energią (np. czerwony) */
+            }
+            80% {
+                background: #8A2BE2; /* Jeszcze inny kolor związany z energią (np. fioletowy) */
+            }
+            100% {
+                background: #008000; /* Wraca do początkowego koloru */
+            }
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: -0.4s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: -0.8s;
+        }
+
+        .dot:nth-child(4) {
+            animation-delay: -1.2s;
+        }
+
+        .dot:nth-child(5) {
+            animation-delay: -1.6s;
+        }
+    </style>
+</head>
+<body>
+
+
+
+<nav>
+    <a href="/prasedata">Statystyki</a>
+	
+    <a href="#">Home</a>
+    
+	<a href="#">Kontakt</a>
+	
+</nav>
+
+<header class="hero">
+
+    <div class="hero-content">
+        <h1>Energy Home</h1>
+    </div>
+</header>
+<div class="container">
+  <div class="chart">
+    <h2>Aktualny odczyt licznika energii</h2>
+    <div class="loader-container">
+      <div class="loader"></div>
+      <p id="meter-reading-value">0 kWh</p>
+    </div>
+	
+  </div>
+</div>
+
+    <div class="chart-container">
+      <div class="chart">
+        <h2>Napięcie L1</h2>
+        <p id="voltage-l1-value">0 V</p>
+	
+        
+      </div>
+	  <div class="chart">
+        <h2>Prąd L1</h2>
+        <p id="current-l1-value">0 A</p>
+      
+      </div>
+	<div class="chart">
+        <h2>Pobór L1</h2>
+        <p id="usage-l1">0 kWh</p>
+     
+      </div>
+    </div>
+	
+    <div class="chart-container">
+	<div class="chart">
+        <h2>Napięcie L2</h2>
+        <p id="voltage-l2-value">0 V</p>
+       
+      </div>
+	  <div class="chart">
+        <h2>Prąd L2</h2>
+        <p id="current-l2-value">0 A</p>
+       
+      </div>
+	  
+       <div class="chart">
+        <h2>Pobór L2</h2>
+        <p id="usage-l2">0 kWh</p>
+     
+      </div>
+    </div>
+		
+    <div class="chart-container">
+	<div class="chart">
+        <h2>Napięcie L3</h2>
+        <p id="voltage-l3-value">0 V</p>
+        
+      </div>
+      <div class="chart">
+        <h2>Prąd L3</h2>
+        <p id="current-l3-value">0 A</p>
+     
+      </div>
+	   <div class="chart">
+        <h2>Pobór L3</h2>
+        <p id="usage-l3">0 kWh</p>
+     
+      </div>
+    </div>
+    </div>
+    <div class="actions">
+      
+    </div>
+    </div>
+</div>
+  <script>
+    
+var totalSumEnergy = 0;
+var sumEnergyPhase1 = 0;
+var sumEnergyPhase2 = 0;
+var sumEnergyPhase3 = 0;
+
+    // Funkcja do odświeżania odczytu licznika energii 
+function fetchEnergyData() {
+    fetch('/savedEnergy')
+        .then(response => response.json())
+        .then(data => {
+            // Logowanie odebranych danych
+            console.log('Odebrane dane:', data);
+
+            // Sprawdzanie pustych wartości i bezpośrednie wyświetlenie danych z JSON-a
+            document.getElementById('meter-reading-value').textContent = data.totalEnergy ? parseFloat(data.totalEnergy).toFixed(8) + ' kWh' : "0 kWh";
+            document.getElementById('usage-l1').textContent = data.energyPhase1 ? parseFloat(data.energyPhase1).toFixed(8) + ' kWh' : "0 kWh";
+            document.getElementById('usage-l2').textContent = data.energyPhase2 ? parseFloat(data.energyPhase2).toFixed(8) + ' kWh' : "0 kWh";
+            document.getElementById('usage-l3').textContent = data.energyPhase3 ? parseFloat(data.energyPhase3).toFixed(8) + ' kWh' : "0 kWh";
+        })
+        .catch(error => console.error('Błąd przy pobieraniu danych:', error));
+}
+
+setInterval(fetchEnergyData, 5000);
+
+
+
+
+
+
+    // Funkcja do aktualizowania napięcia L1
+
+function updateVoltageL1() {
+    fetch('/updatePhase')
+        .then(response => response.json())
+        .then(data => {
+            var voltageL1 = data.phase1.voltageRMS; // Pobranie napięcia L2 z danych serwera
+            var voltageL1Element = document.getElementById('voltage-l1-value');
+            voltageL1Element.textContent = parseFloat(voltageL1).toFixed(2)  + ' V'; // Aktualizacja elementu HTML
+        })
+        .catch(error => {
+            console.error('Error:', error);
+    
+        });
+}
+setInterval(updateVoltageL1, 1000);
+    // Funkcja do aktualizowania napięcia L2
+	
+function updateVoltageL2() {
+    fetch('/updatePhase')
+        .then(response => response.json())
+        .then(data => {
+            var voltageL2 = data.phase2.voltageRMS; // Pobranie napięcia L2 z danych serwera
+            var voltageL2Element = document.getElementById('voltage-l2-value');
+            voltageL2Element.textContent = parseFloat(voltageL2).toFixed(2)  + ' V'; // Aktualizacja elementu HTML
+        })
+        .catch(error => {
+            console.error('Error:', error);
+       
+        });
+}
+
+// Wywołanie funkcji co sekundę
+setInterval(updateVoltageL2, 1000);
+
+	
+	
+	
+	
+
+    function updateVoltageL3() {
+         fetch('/updatePhase')
+        .then(response => response.json())
+        .then(data => {
+            var voltageL3 = data.phase3.voltageRMS; // Pobranie napięcia L2 z danych serwera
+            var voltageL3Element = document.getElementById('voltage-l3-value');
+            voltageL3Element.textContent = parseFloat(voltageL3).toFixed(2) + ' V'; // Aktualizacja elementu HTML
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Możesz tutaj dodać obsługę błędów, np. wyświetlić komunikat na stronie
+        });
+}
+// Wywołanie funkcji co sekundę
+setInterval(updateVoltageL3, 1000);
+
+// Funkcja do aktualizowania prądu L1
+function updateCurrentL1() {
+    fetch('/updatePhase')
+        .then(response => response.json())
+        .then(data => {
+            var currentL1 = data.phase1.CurrentRMS; // Pobranie prądu L1 z danych serwera
+            var currentL1Element = document.getElementById('current-l1-value');
+            currentL1Element.textContent = parseFloat(currentL1).toFixed(2) + ' A'; // Aktualizacja elementu HTML
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+setInterval(updateCurrentL1, 20);
+
+// Funkcja do aktualizowania prądu L2
+function updateCurrentL2() {
+    fetch('/updatePhase')
+        .then(response => response.json())
+        .then(data => {
+            var currentL2 = data.phase2.CurrentRMS; // Pobranie prądu L2 z danych serwera
+            var currentL2Element = document.getElementById('current-l2-value');
+            currentL2Element.textContent = parseFloat(currentL2).toFixed(2) + ' A'; // Aktualizacja elementu HTML
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+setInterval(updateCurrentL2, 1000);
+
+// Funkcja do aktualizowania prądu L3
+function updateCurrentL3() {
+    fetch('/updatePhase')
+        .then(response => response.json())
+        .then(data => {
+            var currentL3 = data.phase3.CurrentRMS; // Pobranie prądu L3 z danych serwera
+            var currentL3Element = document.getElementById('current-l3-value');
+            currentL3Element.textContent = parseFloat(currentL3).toFixed(2) + ' A'; // Aktualizacja elementu HTML
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+setInterval(updateCurrentL3, 1000);
+	
+ 
+
+	function animateBars() {
+    document.getElementById('bar1').style.width = (Math.random() * 100) + '%';
+    document.getElementById('bar2').style.width = (Math.random() * 100) + '%';
+    document.getElementById('bar3').style.width = (Math.random() * 100) + '%';
+}
+// Dodanie nasłuchiwania zdarzeń do wszystkich elementów .chart
+
+
+// Funkcja rozszerzająca chart
+function expandChart() {
+  this.classList.add('expanded'); // Dodanie klasy .expanded do najechanego elementu
+}
+
+// Funkcja zmniejszająca chart
+function shrinkChart() {
+  this.classList.remove('expanded'); // Usunięcie klasy .expanded po opuszczeniu elementu
+}
+
+document.querySelectorAll('.chart').forEach(chart => {
+    chart.addEventListener('click', function() {
+        if (this.classList.contains('expanded')) {
+            this.classList.remove('expanded');
+        } else {
+            document.querySelectorAll('.chart.expanded').forEach(expandedChart => {
+                expandedChart.classList.remove('expanded');
+            });
+            this.classList.add('expanded');
+        }
+    });
+});
+
+
+window.addEventListener('scroll', function() {
+    document.querySelectorAll('.chart.expanded').forEach(expandedChart => {
+        expandedChart.classList.remove('expanded');
+    });
+});
+      //setInterval(animateBars, 2000);
+
+    
+	    let t = 0;
+        const interval = 0.02; // Czas trwania jednego kroku animacji (w sekundach)
+
+        function updateDotPositions() {
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, index) => {
+                dot.style.setProperty('--t', t + index * 0.2);
+                const left = parseFloat(getComputedStyle(dot).left);
+                if (left > window.innerWidth) {
+                    dot.style.left = '-20px';
+                }
+            });
+            t += interval;
+            requestAnimationFrame(updateDotPositions);
+        }
+
+        updateDotPositions();
+  </script>
+</body>
+</html>

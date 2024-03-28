@@ -1,0 +1,175 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>WiFi Configuration</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    /* Osadzone style CSS */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h3 {
+      color: #333;
+      text-align: center;
+    }
+	.offline-btn {
+	  padding: 5px 10px; /* Mniejszy padding */
+      font-size: 12px; /* Mniejszy rozmiar tekstu */
+      border-radius: 5px; /* Mniejsze zaokrąglenie */
+      background-color: #393939; /* Czarny kolor tła */
+      color: #fff; /* Biały kolor tekstu */
+      border: none; /* Usunięcie obramowania */
+      cursor: pointer; /* Kursor wskazujący, że jest to przycisk */
+      outline: none; /* Usunięcie konturu po kliknięciu */
+      }	
+    form {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      margin: 0 auto;
+      max-width: 300px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    input[type="password"],
+    select {
+      margin-bottom: 3px;
+      width: 100%;
+      padding: 4px;
+      border: 2px solid #ccc;
+      border-radius: 40px;
+    }
+
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    input[type="submit"],
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #4caf50;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 40px; /* Poprawiony promień zaokrąglenia */
+    }
+
+    /* Responsywność dla większych ekranów */
+    @media screen and (min-width: 768px) {
+      form {
+        max-width: 500px;
+      }
+    }
+
+    /* Responsywność dla mniejszych ekranów */
+    @media screen and (max-width: 767px) {
+      form {
+        max-width: 100%;
+        padding: 10px;
+      }
+    }
+
+    .refresh-btn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #4caf50;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 40px;
+    }
+  </style>
+  <script>
+    var networksLoaded = false;
+	var network_finished=true;
+    function getNetworks() {
+      if (networksLoaded) return;
+      network_finished=false;
+	  
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "/scanWiFi", true);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          var networks = JSON.parse(xhr.responseText);
+          var select = document.getElementById("ssid");
+          select.innerHTML = "";
+          for (var i = 0; i < networks.length; i++) {
+            var option = document.createElement("option");
+            option.value = networks[i].ssid;
+            option.innerHTML = networks[i].ssid;
+            select.appendChild(option);
+          }
+          networksLoaded = true;
+          document.getElementById("password").disabled = false; // Włącz pole hasła
+          document.getElementById("submitBtn").disabled = false; // Włącz przycisk Submit
+
+          // Odblokuj przycisk "Refresh"
+          var refreshBtn = document.getElementById("refreshBtn");
+          refreshBtn.disabled = false;
+        }
+      };
+      xhr.send();
+	  network_finished=true;
+    }
+
+    function refreshNetworks() {
+	  if(network_finished){
+      var refreshBtn = document.getElementById("refreshBtn");
+      refreshBtn.disabled = true;
+
+      networksLoaded = false;
+      document.getElementById("ssid").innerHTML = "<option>Scanning...</option>";
+      document.getElementById("password").value = "";
+      document.getElementById("password").disabled = true;
+      document.getElementById("submitBtn").disabled = true;
+      getNetworks();
+    }
+     }
+    window.onload = function() {
+      refreshNetworks();
+    };
+	
+	  function goToEnergyPage() {
+      window.location.href = '/energy';
+    }
+  </script>
+</head>
+<body>
+
+  <h3>WiFi Configuration</h3>
+  <br><br>
+  <form action="/configure">
+	<div style="text-align: right;">
+  <button class="offline-btn" id="offlineBtn" onclick="goToEnergyPage(); return false;">Offline</button>
+</div>
+
+    
+    SSID: 
+    <select name="ssid" id="ssid" onchange="getNetworks()">
+      %SSID_OPTIONS%
+    </select>
+    
+    Password: <input type="password" name="password" id="password" disabled> <!-- Dodaj id i wyłącz pole hasła -->
+    <br>
+    <div class="button-container">
+      <input type="submit" value="Submit" id="submitBtn" disabled> <!-- Dodaj id i wyłącz przycisk Submit -->
+    </div>
+    <div style="text-align: center;">
+      <button class="refresh-btn submit-btn" id="refreshBtn" onclick="refreshNetworks(); return false;" disabled>Refresh</button>
+    </div>
+	
+  </form>
+</body>
+</html>

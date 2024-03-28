@@ -1,0 +1,61 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Connected</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f2f2f2;
+    }
+
+    h3 {
+      color: #333333;
+    }
+
+    .ip-address {
+      font-size: 24px;
+      color: #666666;
+      background-color: #ffffff;
+      padding: 10px;
+      border: 1px solid #cccccc;
+      border-radius: 5px;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+
+    .button {
+      display: inline-block;
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      font-size: 20px;
+      margin: 10px;
+      cursor: pointer;
+      border-radius: 40px;
+    }
+
+    .button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <h3>Connected</h3>
+  <p class="ip-address">IP Address: %IP_ADDRESS%</p>
+  <br>
+  <form action="/disconnect">
+    <input class="button" type="submit" value="Disconnect">
+  </form>
+  <form action="/energy">
+    <input class="button" type="submit" value="Home Page">
+  </form>
+  <form action="/settings">
+    <input class="button" type="submit" value="Settings">
+  </form>
+</body>
+</html>

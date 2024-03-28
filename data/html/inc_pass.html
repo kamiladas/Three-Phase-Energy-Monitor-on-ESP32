@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Error</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      color: #333333;
+      text-align: center;
+    }
+    .container {
+      width: 80%; /* Elastyczna szerokość */
+      max-width: 500px; /* Maksymalna szerokość */
+      margin: 10% auto; /* Wyśrodkowanie i margines */
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 600px) {
+      p {
+        font-size: 14px; /* Mniejsza czcionka na mniejszych ekranach */
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Błąd</h2>
+    <p>Podane hasło jest nieprawidłowe.</p>
+    <p>Zostaniesz przekierowany na stronę konfiguracji za 5 sekund...</p>
+  </div>
+
+  <script>
+      setTimeout(function() { window.location.href = '/disconnect'; }, 5000);
+  </script>
+</body>
+</html>
