@@ -29,7 +29,8 @@ Please refer to the PCB project for a detailed list of components and assembly i
 
 
 ![Schematic Overview](https://github.com/kamiladas/Digital_multimeter/assets/58427794/29ea7a18-3429-40fb-94ca-34e23a53a571)
-![Assembled Device](https://raw.githubusercontent.com/kamiladas/Digital_multimeter/main/assets/58427794/94a96525-fa77-41ed-8b66-8f42c49151e9)
+
+![Assembled Device](https://github.com/kamiladas/Digital_multimeter/assets/58427794/a3e03493-0df3-406f-8eea-7c99154d93e4)
 
 ![image](https://github.com/kamiladas/Digital_multimeter/assets/58427794/c7716918-2110-4568-8395-b3739d3f17fe)
 
