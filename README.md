@@ -33,7 +33,8 @@ Please refer to the PCB project for a detailed list of components and assembly i
 
 
 
-![Assembled Device](https://raw.githubusercontent.com/kamiladas/Digital_multimeter/main/assets/58427794/94a96525-fa77-41ed-8b66-8f42c49151e9)
+![Assembled Device](https://github.com/kamiladas/Digital_multimeter/assets/58427794/68c54c70-47e8-45c6-815a-6fbbb4a0eb6e)
+
 
 
 
