@@ -1,10 +1,12 @@
 #include "ESP32CaptivePortal.h"
 #include <ArduinoJson.h>
 #include <ESPmDNS.h>
+#include <SD.h>
+
 
 
 ESP32CaptivePortal::ESP32CaptivePortal()
-  : server(80), isNetworkConfigured(false), isNetworkError(false),isTimeOnline(false){}
+  : server(80), isNetworkConfigured(false), isNetworkError(false), isTimeOnline(false) {}
 
 void ESP32CaptivePortal::begin() {
   Serial.begin(115200);
@@ -13,6 +15,8 @@ void ESP32CaptivePortal::begin() {
   String s_ssid = loadConfig("/config.json", "dev_ssid");
   String s_pass = loadConfig("/config.json", "dev_password");
 
+
+  updateEnergyValues();
 
   if (s_ssid.isEmpty()) {
     s_ssid = "Digital_Multimeter";
@@ -23,21 +27,31 @@ void ESP32CaptivePortal::begin() {
   WiFi.softAP(ssid, password);
   Serial.print("AP IP address_ESP: ");
   Serial.println(WiFi.softAPIP());
-  dnsServer.start(53, "*", WiFi.softAPIP());  
+  dnsServer.start(53, "*", WiFi.softAPIP());
   if (!MDNS.begin("energy")) {
-        Serial.println("Error setting up MDNS responder!");
-        while(1) {
-            delay(1000);
-        }
+    Serial.println("Error setting up MDNS responder!");
+    while (1) {
+      delay(1000);
     }
-    Serial.println("mDNS responder started");    
-  setupServer();            
+  }
+  Serial.println("mDNS responder started");
+  setupServer();
   server.begin();
   Serial.println("Captive Portal - WiFi Configuration");
-  s_ssid = loadConfig("/config.json", "SSID");
+ // s_ssid = loadConfig("/config.json", "SSID");
+///////////////////////// skip connection script
+  
+  WiFi.begin("TOTOLINK_A3002RU", "adasiaki4A8");
+  Serial.print("Łączenie z siecią WiFi...");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.print(".");
+  }
+
+
+
   if (!s_ssid.isEmpty()) { loadConfiguration(); }
   MDNS.addService("http", "tcp", 80);
-
 }
 
 void ESP32CaptivePortal::loop() {
@@ -45,40 +59,25 @@ void ESP32CaptivePortal::loop() {
 }
 
 
-void ESP32CaptivePortal::readConfig(const String &fileName) {
-  File configFile = SPIFFS.open(fileName, "r");
-  if (configFile) {
-    while (configFile.available()) {
-      Serial.write(configFile.read());
-    }
-    configFile.close();
-    Serial.println("\nPlik konfiguracyjny odczytany.");
-  } else {
-    Serial.println("Błąd odczytu pliku konfiguracyjnego.");
-  }
-}
 
-void ESP32CaptivePortal::measureData(int phase) {
-    float I = random(0, 13); // Prąd od 0 do 12
-    float V = random(230, 251); // Napięcie od 230 do 250
-    float cos_fi = abs(-random(0, 101) / 100.0); // Cos(fi) od 0 do -1
-    float Active_Power = V * I * cos_fi;
-    String time = getCurrentTime();
-    
-    Serial.print(I);
-    Serial.println(" A");
-    
-    Serial.print(V);
-    Serial.println(" V");
-    
-    Serial.print(cos_fi);
-    Serial.println(" cos(fi)");
-    
-    Serial.print(Active_Power);
-    Serial.println(" W");
 
-    Serial.println(time);
 
+String SavedtotalEnergy = "0";
+String SavedenergyPhase1 = "0";
+String SavedenergyPhase2 = "0";
+String SavedenergyPhase3 = "0";
+
+void ESP32CaptivePortal::updateEnergyValues() {
+    SavedtotalEnergy = this->loadConfig("/GetEnery.json", "totalEnergy");
+    SavedenergyPhase1 = this->loadConfig("/GetEnery.json", "energyPhase1");
+    SavedenergyPhase2 = this->loadConfig("/GetEnery.json", "energyPhase2");
+    SavedenergyPhase3 = this->loadConfig("/GetEnery.json", "energyPhase3");
+
+    // Przypisanie wartości "0" jeśli ciąg jest pusty
+    SavedtotalEnergy = SavedtotalEnergy.isEmpty() ? "0" : SavedtotalEnergy;
+    SavedenergyPhase1 = SavedenergyPhase1.isEmpty() ? "0" : SavedenergyPhase1;
+    SavedenergyPhase2 = SavedenergyPhase2.isEmpty() ? "0" : SavedenergyPhase2;
+    SavedenergyPhase3 = SavedenergyPhase3.isEmpty() ? "0" : SavedenergyPhase3;
 }
 
 
@@ -113,29 +112,19 @@ void ESP32CaptivePortal::handleConfiguration(AsyncWebServerRequest *request) {
         saveConfig("/config.json", "password", password);
       }
     } else {
-      Serial.println("");
-      Serial.println("Połączenie nieudane");
-
-      String html = "<html><body><h2>Połączenie nieudane</h2>";
-      html += "<p>Nieprawidłowe hasło. Spróbuj ponownie.</p>";
-      html += "<p>Przekierowanie do strony konfiguracji za 5 sekund...</p>";
-      html += "<script>setTimeout(function() { window.location.href = '/disconnect'; }, 5000);</script>";
-      html += "</body></html>";
-
-      request->send(200, "text/html", html);
+      request->send(SPIFFS, "/html/inc_pass.html", "text/html");
     }
-     request->redirect("/connected");
+    request->redirect("/connected");
   } else {
     request->send(400, "text/plain", "Nieprawidłowe żądanie");
   }
-
 }
 
 
 
 void ESP32CaptivePortal::handleRoot(AsyncWebServerRequest *request) {
   if (isNetworkConfigured && isConnectedToESP(request)) {
-     File file = SPIFFS.open("/connected.html", "r");
+    File file = SPIFFS.open("/connected.html", "r");
     if (file) {
       file.close();
       request->redirect("/connected");
@@ -152,14 +141,8 @@ void ESP32CaptivePortal::handleRoot(AsyncWebServerRequest *request) {
       request->send(404);
     }
   } else {
-    File file = SPIFFS.open("/html/energy.html", "r");
-    if (file) {
-      String html = file.readString();
-      file.close();
-      request->send(200, "text/html", html);
-    } else {
-      request->send(404);
-    }
+
+    handleEnergy(request);
   }
 }
 
@@ -180,49 +163,26 @@ void ESP32CaptivePortal::handleDisconnect(AsyncWebServerRequest *request) {
   request->redirect("/");
 }
 
-float ESP32CaptivePortal::getEnergyConsumption() {
-  // Tutaj umieść logikę do odczytu aktualnych danych licznika energii
-  // Może to być np. odczyt z czujnika, obliczenie na podstawie danych zewnętrznych, itp.
-  // W tym przykładzie zwrócę losową wartość dla celów demonstracyjnych
 
-  // Przykład: losowa wartość z zakresu 0.0 do 100.0
-  float energy = random(0, 100);
 
-  return energy;
-}
+
+
+
 
 void ESP32CaptivePortal::handleEnergy(AsyncWebServerRequest *request) {
-  // Pobierz aktualną wartość konsumpcji energii
-  float energy = getEnergyConsumption();
+  if (request->method() == HTTP_GET) {
+    // Obsługa żądania GET - wysyłanie strony HTML
+    if (SPIFFS.exists("/html/energy.html")) {
+      request->send(SPIFFS, "/html/energy.html", "text/html");
+    }
 
-  // Przygotuj bufor na przechowywanie wyrenderowanego HTML
-  const size_t bufferSize = JSON_OBJECT_SIZE(1);
-  DynamicJsonDocument jsonDoc(bufferSize);
-  jsonDoc["energy"] = energy;
 
-  String jsonData;
-  serializeJson(jsonDoc, jsonData);
-
-  // Otwórz plik "energy.html" na serwerze SPIFFS
-  File file = SPIFFS.open("/html/energy.html", "r");
-
-  if (file) {
-    // Jeśli plik został otwarty poprawnie, odczytaj jego zawartość
-    String html = file.readString();
-    file.close();
-
-    // Zastąp placeholder `%ENERGY_CONSUMPTION%` aktualną wartością konsumpcji energii w odpowiedzi HTML
-    html.replace("%ENERGY_CONSUMPTION%", jsonData);
-
-    // Wyślij zawartość pliku z zastąpionym JSONem jako odpowiedź HTTP
-    request->send(200, "text/html", html);
-  } else {
-    // Jeśli nie udało się otworzyć pliku, zwróć kod błędu 404 (Nie znaleziono)
-    request->send(404);
+    else {
+      // Obsługa innych metod HTTP
+      request->send(400, "text/plain", "Nieobsługiwana metoda");
+    }
   }
 }
-
-
 
 
 
@@ -333,14 +293,10 @@ void ESP32CaptivePortal::loadConfiguration() {
   String password = loadConfig("/config.json", "password");
 
   if (isSSIDAvailable(ssid)) {
-    // Usuń znaki nowej linii z odczytanych wartości
+    
     ssid.trim();
     password.trim();
-
-    // Podłączanie do sieci WiFi
-    WiFi.begin(ssid.c_str(), password.c_str());
     Serial.print("Łączenie z siecią WiFi...");
-
     int timeout = 10;  // Czas oczekiwania na połączenie (w sekundach)
     while (WiFi.status() != WL_CONNECTED && timeout > 0) {
       delay(1000);
@@ -361,11 +317,11 @@ void ESP32CaptivePortal::loadConfiguration() {
   }
 
   else {
-    ////////// obsługa brak SSID
+   
   }
 }
 
-/////////////////////////////////////////////////////////////////////
+
 
 
 
@@ -383,7 +339,7 @@ String ESP32CaptivePortal::loadConfig(const String &fileName, const String &fiel
     DynamicJsonDocument jsonDoc(1024);
     DeserializationError error = deserializeJson(jsonDoc, buf.get());
     if (error) {
-      Serial.println("Błąd Serializacji  pliku konfiguracyjnego.");
+      // Serial.println("Błąd Serializacji  pliku konfiguracyjnego.");
       return "";
     }
 
@@ -393,7 +349,7 @@ String ESP32CaptivePortal::loadConfig(const String &fileName, const String &fiel
       String fieldValue = jsonDoc[fieldName].as<String>();
       return fieldValue;
     } else {
-      Serial.println("Pole '" + fieldName + "' nie istnieje w pliku konfiguracyjnym.");
+      //Serial.println("Pole '" + fieldName + "' nie istnieje w pliku konfiguracyjnym.");
       return "";
     }
   } else {
@@ -406,24 +362,23 @@ String ESP32CaptivePortal::loadConfig(const String &fileName, const String &fiel
 void ESP32CaptivePortal::handleTimezones(AsyncWebServerRequest *request) {
   if (request->method() == HTTP_POST) {
     if (request->arg("isOfflineTime") == "true") {
-      isTimeOnline=true;
+      isTimeOnline = true;
       // Czas Offline, odczytaj datę i godzinę z formularza
       String offlineDate = request->arg("offlineDate");
-      String offlineTime = request->arg("offlineTime");  
+      String offlineTime = request->arg("offlineTime");
       saveConfig("/config.json", "offlineDate", offlineDate);
       saveConfig("/config.json", "offlineTime", offlineTime);
-      Serial.println(loadConfig("/config.json","onlineDate"));
+      Serial.println(loadConfig("/config.json", "onlineDate"));
       request->send(200, "text/plain", "Czas Offline został zatwierdzony.");
-    }if (request->arg("isOfflineTime") == "false"){
-       isTimeOnline=false;
+    }
+    if (request->arg("isOfflineTime") == "false") {
+      isTimeOnline = false;
       String selectedTimezone = request->arg("timezone");
       Serial.println("Strefa czasowa: " + selectedTimezone);
       saveConfig("/config.json", "timezone", selectedTimezone);
       request->send(200, "text/plain", "Strefa czasowa została zatwierdzona");
-      
     }
   } else if (request->method() == HTTP_GET) {
-    // Kod do obsługi żądania GET, jeśli to potrzebne
     if (SPIFFS.exists("/timezone.json")) {
       request->send(SPIFFS, "/timezone.json", "application/json");
     } else {
@@ -436,41 +391,39 @@ void ESP32CaptivePortal::handleTimezones(AsyncWebServerRequest *request) {
 
 ///////////////////////////////////
 String ESP32CaptivePortal::getCurrentTime() {
-WiFiUDP ntpUDP;
+  WiFiUDP ntpUDP;
   NTPClient timeClient(ntpUDP, "time.google.com");
- String dayStamp;
- String timeStamp;
- String formattedDate;
- String formattedTime;
- int splitT;
+  String dayStamp;
+  String timeStamp;
+  String formattedDate;
+  String formattedTime;
+  int splitT;
   timeClient.begin();
   timeClient.update();
 
   String timezone = loadConfig("/config.json", "timezone");
-  if (timezone != "" && timezone != "0"&&isTimeOnline==false) {
+  if (timezone != "" && timezone != "0" && isTimeOnline == false) {
     int timezoneValue = timezone.toInt();
     timeClient.setTimeOffset(3600 * timezoneValue);  // Ustawienie przesunięcia czasowego (w sekundach)
   }
-   if  ( isTimeOnline==true)
-  {    
-      formattedDate = timeClient.getFormattedDate();
-      formattedTime = timeClient.getFormattedTime();
-      splitT = formattedDate.indexOf("T");
-      dayStamp = formattedDate.substring(0, splitT);
-      timeStamp = formattedDate.substring(splitT + 1, formattedDate.length() - 1);
-      static int timeZeroOffset;
-      static String prevTime = "";
-      static String prevDate = "";
-      String  offlineDate = loadConfig("/config.json", "offlineDate");
-      String  offlineTime = loadConfig("/config.json", "offlineTime");   
-      int timeOffset=getCustomDateTimeInSeconds(offlineDate,offlineTime);
-       if (offlineTime!=prevTime||offlineDate!=prevDate){
-       prevDate=offlineDate;
-       prevTime=offlineTime;
-       timeZeroOffset=(getCustomDateTimeInSeconds(dayStamp,timeStamp)*-1); 
-       
-       }
-       timeClient.setTimeOffset(timeOffset+timeZeroOffset); 
+  if (isTimeOnline == true) {
+    formattedDate = timeClient.getFormattedDate();
+    formattedTime = timeClient.getFormattedTime();
+    splitT = formattedDate.indexOf("T");
+    dayStamp = formattedDate.substring(0, splitT);
+    timeStamp = formattedDate.substring(splitT + 1, formattedDate.length() - 1);
+    static int timeZeroOffset;
+    static String prevTime = "";
+    static String prevDate = "";
+    String offlineDate = loadConfig("/config.json", "offlineDate");
+    String offlineTime = loadConfig("/config.json", "offlineTime");
+    int timeOffset = getCustomDateTimeInSeconds(offlineDate, offlineTime);
+    if (offlineTime != prevTime || offlineDate != prevDate) {
+      prevDate = offlineDate;
+      prevTime = offlineTime;
+      timeZeroOffset = (getCustomDateTimeInSeconds(dayStamp, timeStamp) * -1);
+    }
+    timeClient.setTimeOffset(timeOffset + timeZeroOffset);
   }
   timeClient.update();
   formattedDate = timeClient.getFormattedDate();
@@ -479,21 +432,20 @@ WiFiUDP ntpUDP;
   dayStamp = formattedDate.substring(0, splitT);
   timeStamp = formattedDate.substring(splitT + 1, formattedDate.length() - 1);
   String combinedString = dayStamp + " " + formattedTime;
-  
-  return combinedString;
 
+  return combinedString;
 }
 
 
-int ESP32CaptivePortal::getCustomDateTimeInSeconds( String customDateStr,String customTimeStr) {
- 
+int ESP32CaptivePortal::getCustomDateTimeInSeconds(String customDateStr, String customTimeStr) {
+
   int year = customDateStr.substring(0, 4).toInt();
   int month = customDateStr.substring(5, 7).toInt();
   int day = customDateStr.substring(8, 10).toInt();
   int hour = customTimeStr.substring(0, 2).toInt();
   int minute = customTimeStr.substring(3, 5).toInt();
   int second = customTimeStr.substring(6, 8).toInt();
-  Serial.println(second);
+  //Serial.println(second);
   // Utwórz struct tm i ustaw podaną datę i godzinę
   struct tm timeinfo;
   timeinfo.tm_year = year - 1900;
@@ -509,6 +461,138 @@ int ESP32CaptivePortal::getCustomDateTimeInSeconds( String customDateStr,String 
   // Zwróć ilość sekund jako wartość funkcji
   return static_cast<int>(customDateTime);
 }
+
+float ESP32CaptivePortal::calculateTimeDifferenceInSeconds(String dateTimeStr1, String dateTimeStr2) {
+  // Konwersja pierwszej daty z formatu string na time_t
+  struct tm tm1;
+  sscanf(dateTimeStr1.c_str(), "%d-%d-%d %d:%d:%d",
+         &tm1.tm_year, &tm1.tm_mon, &tm1.tm_mday,
+         &tm1.tm_hour, &tm1.tm_min, &tm1.tm_sec);
+  tm1.tm_year -= 1900;
+  tm1.tm_mon -= 1;
+  time_t time1 = mktime(&tm1);
+
+  // Konwersja drugiej daty z formatu string na time_t
+  struct tm tm2;
+  sscanf(dateTimeStr2.c_str(), "%d-%d-%d %d:%d:%d",
+         &tm2.tm_year, &tm2.tm_mon, &tm2.tm_mday,
+         &tm2.tm_hour, &tm2.tm_min, &tm2.tm_sec);
+  tm2.tm_year -= 1900;
+  tm2.tm_mon -= 1;
+  time_t time2 = mktime(&tm2);
+
+  // Oblicz różnicę czasu w sekundach
+  double difference = difftime(time2, time1);
+
+  // Sprawdź, czy różnica mieści się w zakresie od 0.5 do 3 sekund
+  if (difference >= 0.5 && difference <= 3.0) {
+    return static_cast<float>(difference);
+  } else {
+    return 1.5f;  // Zwróć 1.5, jeśli nie mieści się w zakresie
+  }
+}
+
+
+
+/// wartosci rzeczywiste
+void ESP32CaptivePortal::handlePhaseDataRequest(AsyncWebServerRequest *request) {
+  String response;
+  DynamicJsonDocument doc(1024);
+
+  // Tutaj dodaj kod do wypełnienia `doc` aktualnymi danymi pomiarowymi
+  doc["phase1"]["voltageRMS"] = data.phase1.voltageRMS;
+  doc["phase1"]["CurrentRMS"] = data.phase1.currentRMS;
+
+  doc["phase2"]["voltageRMS"] = data.phase2.voltageRMS;
+  doc["phase2"]["CurrentRMS"] = data.phase2.currentRMS;
+
+  doc["phase3"]["voltageRMS"] = data.phase3.voltageRMS;
+  doc["phase3"]["CurrentRMS"] = data.phase3.currentRMS;
+
+
+  serializeJson(doc, response);
+  request->send(200, "application/json", response);
+}
+
+
+String ESP32CaptivePortal::sumStrings(String A, String B) {
+  float conversion1 = A.toFloat();
+  float conversion2 = B.toFloat();
+
+  float suma = conversion1 + conversion2;
+
+  return String(suma, 12);
+}
+
+String ESP32CaptivePortal::Generate_FlieName(bool setup) {
+  String currentTime = getCurrentTime();
+  String currentHour = currentTime.substring(11, 13);  // Pobranie aktualnej godziny
+  String currentDate = currentTime.substring(0, 10);   // Pobranie aktualnej daty (format YYYY-MM-DD)
+
+  String lastDate = loadConfig("/GetEnery.json", "lastDate");
+  String lastHour = loadConfig("/GetEnery.json", "lastHour");
+  Serial.println(lastDate);
+
+
+
+  // Sprawdzamy, czy data się zmieniła lub czy zmieniła się godzina
+  if (lastDate != currentDate || lastHour != currentHour) {
+    ////tutaj Udate zachowanych danych..
+    bool saveDate = this->saveConfig("/GetEnery.json", "lastDate", currentDate);
+    bool saveHour = this->saveConfig("/GetEnery.json", "lastHour", currentHour);
+    // Formatujemy datę do postaci "YYYY_MM_DD"
+    String formattedDate = currentDate.substring(0, 4) + "-" + currentDate.substring(5, 7) + "-" + currentDate.substring(8, 10);
+
+    // Zwracamy ścieżkę folderu i nazwę pliku z aktualną datą i godziną
+    return "/" + formattedDate + "/" + currentHour + "_00.csv";
+  }
+
+  // W przeciwnym razie zwracamy ścieżkę i nazwę pliku z ostatnio zaktualizowaną datą i godziną
+  return "/" + lastDate + "/" + lastHour + "_00.csv";
+}
+
+
+
+
+String ESP32CaptivePortal::createJsonFileList(String path) {
+  File dir = SD.open(path.c_str());
+
+  if (!dir || !dir.isDirectory()) {
+    Serial.println("Error opening directory");
+    return "{}";
+  }
+
+  DynamicJsonDocument doc(5500);
+  JsonArray array = doc.to<JsonArray>();
+
+  String processedDirs = ",";  // Używamy przecinka jako separatora
+
+  while (File file = dir.openNextFile()) {
+    String fileName = file.name();
+
+    // Sprawdzenie, czy folder już został przetworzony
+    if (processedDirs.indexOf("," + fileName + ",") != -1) {
+      continue;  // Pomiń, jeśli folder był już przetworzony
+    }
+
+    JsonObject obj = array.createNestedObject();
+    obj["name"] = fileName;
+    obj["size"] = file.size();
+
+    if (file.isDirectory()) {
+      processedDirs += fileName + ",";  // Dodaj folder do listy przetworzonych
+    }
+
+    file.close();
+  }
+  dir.close();
+
+  String output;
+  serializeJson(doc, output);
+  return output;
+}
+
+
 void ESP32CaptivePortal::setupServer() {
   server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request) {
     handleRoot(request);
@@ -526,7 +610,7 @@ void ESP32CaptivePortal::setupServer() {
     handleScanWiFi(request);
   });
 
-     server.on("/getTimezones", HTTP_ANY, [this](AsyncWebServerRequest *request) {
+  server.on("/getTimezones", HTTP_ANY, [this](AsyncWebServerRequest *request) {
     handleTimezones(request);
   });
 
@@ -556,14 +640,17 @@ void ESP32CaptivePortal::setupServer() {
 
   server.onNotFound(std::bind(&ESP32CaptivePortal::handleRoot, this, std::placeholders::_1));
 
-  server.on("/energy", HTTP_GET, std::bind(&ESP32CaptivePortal::handleEnergy, this, std::placeholders::_1));
+  server.on("/energy", HTTP_ANY, std::bind(&ESP32CaptivePortal::handleEnergy, this, std::placeholders::_1));
+
+  server.on("/updatePhase", HTTP_GET, std::bind(&ESP32CaptivePortal::handlePhaseDataRequest, this, std::placeholders::_1));
 
   server.on("/settings", HTTP_GET, [this](AsyncWebServerRequest *request) {
     if (isConnectedToESP(request)) {
-      request->send(SPIFFS, "/html/settings.html", "text/html");
-    } else { 
-      request->send(SPIFFS, "/html/handle_localUser.html", "text/html");
-    }
+    request->send(SPIFFS, "/html/settings.html", "text/html");
+     }
+    else {
+    request->send(SPIFFS, "/html/handle_localUser.html", "text/html");
+     }
   });
 
   server.on("/resetFactorySettings", HTTP_POST, [this](AsyncWebServerRequest *request) {
@@ -662,10 +749,59 @@ void ESP32CaptivePortal::setupServer() {
   server.on("/NetWorkError", HTTP_GET, [this](AsyncWebServerRequest *request) {
     request->send(SPIFFS, "/html/NetWorkError.html", "text/html");
   });
-    server.on("/test", HTTP_GET, [this](AsyncWebServerRequest *request) {
+  server.on("/test", HTTP_GET, [this](AsyncWebServerRequest *request) {
     request->send(SPIFFS, "/html/test.html", "text/html");
   });
-     server.on("/Phase1_data.csv", HTTP_GET, [this](AsyncWebServerRequest *request) {
-    request->send(SPIFFS, "/Phase1_data.csv", "text/html");
+
+
+  server.on("/display", HTTP_GET, [this](AsyncWebServerRequest *request) {
+    String path = getFPath();
+    if (SD.exists(path.c_str())) {
+      request->send(SD, path.c_str(), "text/csv", true);
+    } else {
+      request->send(404, "text/plain", "File Not Found");
+    }
+  });
+
+
+  server.on("/filelist", HTTP_GET, [this](AsyncWebServerRequest *request) {
+    String path = "/main_data";  // Ścieżka do katalogu, który chcesz wylistować
+    String fileList = createJsonFileList(path);
+    request->send(200, "application/json", fileList);
+  });
+
+
+  server.on("/prasedata", HTTP_GET, [this](AsyncWebServerRequest *request) {
+    request->send(SPIFFS, "/html/prase_data.html", "text/html");
+  });
+
+
+
+
+  server.on("/download", HTTP_GET, [](AsyncWebServerRequest *request) {
+    ///esp_task_wdt_reset();
+    if (request->hasParam("file")) {
+      String fileName = request->getParam("file")->value();
+      if (SD.exists(fileName)) {
+        request->send(SD, fileName, String(), true);
+
+      } else {
+        request->send(404, "text/plain", "File not found");
+      }
+    } else {
+      request->send(400, "text/plain", "Bad Request");
+    }
+  });
+
+  server.on("/savedEnergy", HTTP_GET, [this](AsyncWebServerRequest *request) {
+    SavedtotalEnergy = this->loadConfig("/GetEnery.json", "totalEnergy");
+    SavedenergyPhase1 = this->loadConfig("/GetEnery.json", "energyPhase1");
+    SavedenergyPhase2 = this->loadConfig("/GetEnery.json", "energyPhase2");
+    SavedenergyPhase3 = this->loadConfig("/GetEnery.json", "energyPhase3");
+
+
+    String jsonResponse = "{\"totalEnergy\": \"" + SavedtotalEnergy + "\", \"energyPhase1\": \"" + SavedenergyPhase1 + "\", \"energyPhase2\": \"" + SavedenergyPhase2 + "\", \"energyPhase3\": \"" + SavedenergyPhase3 + "\"}";
+
+    request->send(200, "application/json", jsonResponse);
   });
 }
