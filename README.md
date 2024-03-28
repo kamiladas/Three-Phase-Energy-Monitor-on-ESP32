@@ -26,11 +26,10 @@ Please refer to the PCB project for a detailed list of components and assembly i
 3. Upload Firmware via Arduino IDE
 
 ![ESP32 PCB ](https://github.com/kamiladas/Digital_multimeter/assets/58427794/6b9421fc-af99-4d5c-b5da-9a12be77cae9)
-![ESP32 PCB ](https://github.com/kamiladas/Digital_multimeter/assets/58427794/7ea5d9d1-ac70-4254-af57-573da36cf4c4)
+
 
 ![Schematic Overview](https://github.com/kamiladas/Digital_multimeter/assets/58427794/29ea7a18-3429-40fb-94ca-34e23a53a571)
 ![Assembled Device](https://raw.githubusercontent.com/kamiladas/Digital_multimeter/main/assets/58427794/94a96525-fa77-41ed-8b66-8f42c49151e9)
-![Usage Example]((https://github.com/kamiladas/Digital_multimeter/assets/58427794/48e20bf6-e66c-492a-ac39-391263458551)
 
 ![image](https://github.com/kamiladas/Digital_multimeter/assets/58427794/c7716918-2110-4568-8395-b3739d3f17fe)
 
