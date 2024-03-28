@@ -25,12 +25,17 @@ Please refer to the PCB project for a detailed list of components and assembly i
 
 3. Upload Firmware via Arduino IDE
 
-![ESP32 PCB Front](https://raw.githubusercontent.com/kamiladas/Digital_multimeter/main/assets/58427794/5b6be8a6-a530-4cb1-8627-ef2a3be193ce)
-![ESP32 PCB Back](https://raw.githubusercontent.com/kamiladas/Digital_multimeter/main/assets/58427794/2a637886-2d69-40b0-9947-0b760bf66bcb)
-![Schematic Overview](https://raw.githubusercontent.com/kamiladas/Digital_multimeter/main/assets/58427794/0ca8119f-33b6-44aa-bdbd-b76f65ee1232)
+![ESP32 PCB ](https://github.com/kamiladas/Digital_multimeter/assets/58427794/6b9421fc-af99-4d5c-b5da-9a12be77cae9)
+![ESP32 PCB ](https://github.com/kamiladas/Digital_multimeter/assets/58427794/7ea5d9d1-ac70-4254-af57-573da36cf4c4)
+
+![Schematic Overview](https://github.com/kamiladas/Digital_multimeter/assets/58427794/29ea7a18-3429-40fb-94ca-34e23a53a571)
 ![Assembled Device](https://raw.githubusercontent.com/kamiladas/Digital_multimeter/main/assets/58427794/94a96525-fa77-41ed-8b66-8f42c49151e9)
-![Usage Example](https://raw.githubusercontent.com/kamiladas/Digital_multimeter/main/assets/58427794/6b3965eb-2388-4d0a-90be-b098d8f8efd1)
-![Application UI](https://raw.githubusercontent.com/kamiladas/Digital_multimeter/main/assets/58427794/39bb287a-e0ca-4dfa-9cd0-d5b3e1f37aa8)
+![Usage Example]((https://github.com/kamiladas/Digital_multimeter/assets/58427794/48e20bf6-e66c-492a-ac39-391263458551)
+
+![image](https://github.com/kamiladas/Digital_multimeter/assets/58427794/c7716918-2110-4568-8395-b3739d3f17fe)
+
+![Application UI](https://github.com/kamiladas/Digital_multimeter/assets/58427794/9468b386-d8fb-49d6-8b63-8a7d2e5a2e6e)
+
 
 PCB and diagram 
 [PCB and Diagram on OSHWLab](https://oshwlab.com/kamil.adaskamil.adas/adasa)
