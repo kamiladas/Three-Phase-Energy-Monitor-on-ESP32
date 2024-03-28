@@ -45,4 +45,4 @@ Please refer to the PCB project for a detailed list of components and assembly i
 
 
 PCB and diagram 
-[PCB and Diagram on OSHWLab](https://oshwlab.com/kamil.adaskamil.adas/adasa)
+[PCB and Diagram on OSHWLab](https://oshwlab.com/kamil.adaskamil.adas/adas)
