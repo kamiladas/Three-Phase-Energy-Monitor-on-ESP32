@@ -38,10 +38,7 @@ void ESP32CaptivePortal::begin() {
   setupServer();
   server.begin();
   Serial.println("Captive Portal - WiFi Configuration");
- // s_ssid = loadConfig("/config.json", "SSID");
-///////////////////////// skip connection script
-  
-  WiFi.begin("TOTOLINK_A3002RU", "adasiaki4A8");
+  s_ssid = loadConfig("/config.json", "SSID");
   Serial.print("Łączenie z siecią WiFi...");
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
