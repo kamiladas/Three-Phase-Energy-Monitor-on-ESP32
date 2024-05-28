@@ -491,7 +491,7 @@ float ESP32CaptivePortal::calculateTimeDifferenceInSeconds(String dateTimeStr1, 
 
 
 
-/// wartosci rzeczywiste
+
 void ESP32CaptivePortal::handlePhaseDataRequest(AsyncWebServerRequest *request) {
   String response;
   DynamicJsonDocument doc(1024);
