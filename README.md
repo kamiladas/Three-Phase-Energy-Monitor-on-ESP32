@@ -37,7 +37,11 @@ Users can configure the Wi-Fi settings directly from the interface.
 For a live demonstration of the system's functionality, refer to the following video:
 
 
-                                                                                               https://github.com/user-attachments/assets/96010725-bf5d-41b2-bc6a-eb72fd24c52f
+                                                                                   https://github.com/user-attachments/assets/12034a56-c6ff-4372-9617-42a8840f2156
+
+
+
+                                                                                             
 
 
 ### Future Work and Contributions
