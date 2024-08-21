@@ -14,23 +14,23 @@ This repository contains the design and implementation details for a three-phase
 
 #### Connected Device Page
 Displays the current IP address and provides options to disconnect, return to the homepage, or access settings.
-![connected2](https://github.com/user-attachments/assets/e1e79304-1e8b-4a55-9eae-2ac1e46adad8)
+<div align="center"><img src="https://github.com/user-attachments/assets/e1e79304-1e8b-4a55-9eae-2ac1e46adad8" alt="connected2" style="max-width: 100%;"></div>
 
 
 #### Main Dashboard with MDNS
 Shows the real-time energy consumption in kilowatt-hours (kWh).
-![MDNS](https://github.com/user-attachments/assets/5b3e1c0e-d8a3-46d7-b4a6-5f39a85f1ebb)
+<div align="center"><img src="https://github.com/user-attachments/assets/5b3e1c0e-d8a3-46d7-b4a6-5f39a85f1ebb" alt="MDNS" style="max-width: 100%;"></div>
 
 
 #### Settings Page
 Allows users to reset to factory settings, change passwords, and configure time zones.
-![settings_page](https://github.com/user-attachments/assets/b60d5ae9-3526-4136-86b2-c2e2661aa731)
+<div align="center"><img src="https://github.com/user-attachments/assets/b60d5ae9-3526-4136-86b2-c2e2661aa731" alt="settings_page" style="max-width: 100%;"></div>
 
 
 #### Wi-Fi Configuration
 Users can configure the Wi-Fi settings directly from the interface.
-![wifi_con](https://github.com/user-attachments/assets/26290412-9373-4b2c-92ba-633fbc3281a4)
-![wifi_con2](https://github.com/user-attachments/assets/336f6a2c-9dcc-4a77-8e94-208e3ae50b82)
+<div align="center"><img src="https://github.com/user-attachments/assets/26290412-9373-4b2c-92ba-633fbc3281a4" alt="wifi_con" style="max-width: 100%;"></div>
+<div align="center"><img src="https://github.com/user-attachments/assets/336f6a2c-9dcc-4a77-8e94-208e3ae50b82" alt="wifi_con2" style="max-width: 100%;"></div>
 
 
 ### Video Demonstration
@@ -66,20 +66,20 @@ Please refer to the PCB project for a detailed list of components and assembly i
 
 3. Upload Firmware via Arduino IDE
 
-![ESP32 PCB ](https://github.com/kamiladas/Digital_multimeter/assets/58427794/6b9421fc-af99-4d5c-b5da-9a12be77cae9)
+<div align="center"><img src="https://github.com/kamiladas/Digital_multimeter/assets/58427794/6b9421fc-af99-4d5c-b5da-9a12be77cae9" alt="ESP32 PCB " style="max-width: 100%;"></div>
 
 
 
-![Schematic Overview](https://github.com/kamiladas/Digital_multimeter/assets/58427794/29ea7a18-3429-40fb-94ca-34e23a53a571)
+<div align="center"><img src="https://github.com/kamiladas/Digital_multimeter/assets/58427794/29ea7a18-3429-40fb-94ca-34e23a53a571" alt="Schematic Overview" style="max-width: 100%;"></div>
 
 
 
-![Assembled Device](https://github.com/kamiladas/Digital_multimeter/assets/58427794/68c54c70-47e8-45c6-815a-6fbbb4a0eb6e)
+<div align="center"><img src="https://github.com/kamiladas/Digital_multimeter/assets/58427794/68c54c70-47e8-45c6-815a-6fbbb4a0eb6e" alt="Assembled Device" style="max-width: 100%;"></div>
 
 
 
 
-![Application UI](https://github.com/kamiladas/Digital_multimeter/assets/58427794/9468b386-d8fb-49d6-8b63-8a7d2e5a2e6e)
+<div align="center"><img src="https://github.com/kamiladas/Digital_multimeter/assets/58427794/9468b386-d8fb-49d6-8b63-8a7d2e5a2e6e" alt="Application UI" style="max-width: 100%;"></div>
 
 
 
