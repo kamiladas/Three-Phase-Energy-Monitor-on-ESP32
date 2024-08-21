@@ -36,12 +36,9 @@ Users can configure the Wi-Fi settings directly from the interface.
 ### Video Demonstration
 For a live demonstration of the system's functionality, refer to the following video:
 
-<div align="center">
-  <video width="600" controls>
-    <source src="https://github.com/user-attachments/assets/96010725-bf5d-41b2-bc6a-eb72fd24c52f" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-</div>
+
+                                                                                               https://github.com/user-attachments/assets/96010725-bf5d-41b2-bc6a-eb72fd24c52f
+
 
 ### Future Work and Contributions
 - Implementing MQTT for cloud-based data logging and analysis.
