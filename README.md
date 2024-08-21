@@ -9,6 +9,47 @@ This repository contains the design and implementation details for a three-phase
 - Compact and efficient PCB design.
 - Open source software for data logging and analysis.
 
+
+### Application Interface
+
+#### Connected Device Page
+Displays the current IP address and provides options to disconnect, return to the homepage, or access settings.
+![connected2](https://github.com/user-attachments/assets/e1e79304-1e8b-4a55-9eae-2ac1e46adad8)
+
+
+#### Main Dashboard with MDNS
+Shows the real-time energy consumption in kilowatt-hours (kWh).
+![MDNS](https://github.com/user-attachments/assets/5b3e1c0e-d8a3-46d7-b4a6-5f39a85f1ebb)
+
+
+#### Settings Page
+Allows users to reset to factory settings, change passwords, and configure time zones.
+![settings_page](https://github.com/user-attachments/assets/b60d5ae9-3526-4136-86b2-c2e2661aa731)
+
+
+#### Wi-Fi Configuration
+Users can configure the Wi-Fi settings directly from the interface.
+![wifi_con](https://github.com/user-attachments/assets/26290412-9373-4b2c-92ba-633fbc3281a4)
+![wifi_con2](https://github.com/user-attachments/assets/336f6a2c-9dcc-4a77-8e94-208e3ae50b82)
+
+
+### Video Demonstration
+For a live demonstration of the system's functionality, refer to the following video:
+
+
+https://github.com/user-attachments/assets/96010725-bf5d-41b2-bc6a-eb72fd24c52f
+
+
+
+
+### Future Work and Contributions
+- Implementing MQTT for cloud-based data logging and analysis.
+- Adding support for more sensors and peripherals.
+- Improving the UI/UX of the web interface.
+
+Contributions are welcome! Please feel free to fork this project and submit pull requests.
+
+
 ## Hardware
 The core of the energy monitor is a custom-designed PCB that interfaces with the ESP32 microcontroller. The design files for this PCB are available for viewing and modification at the following link:
 
@@ -46,3 +87,7 @@ Please refer to the PCB project for a detailed list of components and assembly i
 
 PCB and diagram 
 [PCB and Diagram on OSHWLab](https://oshwlab.com/kamil.adaskamil.adas/adas)
+
+
+### License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
