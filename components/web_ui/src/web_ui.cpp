@@ -13,6 +13,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
+#include <new>
 
 namespace em {
 namespace {
@@ -134,24 +136,22 @@ esp_err_t waveform_handler(httpd_req_t* request) {
 esp_err_t storage_status_handler(httpd_req_t*req){const auto s=sd_store_stats();char j[192];int n=std::snprintf(j,sizeof(j),"{\"mounted\":%s,\"records_written\":%llu,\"dropped\":%llu,\"write_errors\":%llu}",s.mounted?"true":"false",(unsigned long long)s.written,(unsigned long long)s.dropped,(unsigned long long)s.write_errors);httpd_resp_set_type(req,"application/json");return httpd_resp_send(req,j,n);}
 
 esp_err_t aggregate_handler(httpd_req_t*req){
-    char query[192]={},from_text[24]={},to_text[24]={},resolution[12]="hour",count_text[8]="24";
+    char query[192]={},from_text[24]={},to_text[24]={},resolution[16]="hour",count_text[8]="24";
     if(httpd_req_get_url_query_str(req,query,sizeof(query))!=ESP_OK||
        httpd_query_key_value(query,"from",from_text,sizeof(from_text))!=ESP_OK||
        httpd_query_key_value(query,"to",to_text,sizeof(to_text))!=ESP_OK){
         httpd_resp_set_status(req,"400 Bad Request");return httpd_resp_sendstr(req,"{\"ready\":false,\"error\":\"from_and_to_required\"}");
     }
     httpd_query_key_value(query,"resolution",resolution,sizeof(resolution));httpd_query_key_value(query,"buckets",count_text,sizeof(count_text));
-    const std::int64_t from=std::strtoll(from_text,nullptr,10),to=std::strtoll(to_text,nullptr,10);const std::size_t count=static_cast<std::size_t>(std::strtoul(count_text,nullptr,10));SdEnergyAggregate a{};
-    if((std::strcmp(resolution,"hour")&&std::strcmp(resolution,"day")&&std::strcmp(resolution,"month"))||sd_store_aggregate_utc(from,to,count,a)!=ESP_OK){httpd_resp_set_status(req,"503 Service Unavailable");return httpd_resp_sendstr(req,"{\"ready\":false,\"error\":\"storage_or_resolution_unavailable\"}");}
+    const std::int64_t from=std::strtoll(from_text,nullptr,10),to=std::strtoll(to_text,nullptr,10);const std::size_t count=static_cast<std::size_t>(std::strtoul(count_text,nullptr,10));
+    std::unique_ptr<SdEnergyAggregate> a(new(std::nothrow) SdEnergyAggregate{});
+    if(!a){httpd_resp_set_status(req,"503 Service Unavailable");return httpd_resp_sendstr(req,"{\"ready\":false,\"error\":\"out_of_memory\"}");}
+    SdAggregationResolution aggregation{};
+    if(std::strcmp(resolution,"five_minute")==0)aggregation=SdAggregationResolution::five_minute;else if(std::strcmp(resolution,"hour")==0)aggregation=SdAggregationResolution::hour;else if(std::strcmp(resolution,"three_hour")==0)aggregation=SdAggregationResolution::three_hour;else if(std::strcmp(resolution,"day")==0)aggregation=SdAggregationResolution::day;else if(std::strcmp(resolution,"month")==0)aggregation=SdAggregationResolution::month;else{httpd_resp_set_status(req,"400 Bad Request");return httpd_resp_sendstr(req,"{\"ready\":false,\"error\":\"invalid_resolution\"}");}
+    if(sd_store_aggregate_utc(from,to,count,aggregation,*a)!=ESP_OK){httpd_resp_set_status(req,"503 Service Unavailable");return httpd_resp_sendstr(req,"{\"ready\":false,\"error\":\"storage_or_resolution_unavailable\"}");}
     httpd_resp_set_type(req,"application/json");httpd_resp_set_hdr(req,"Cache-Control","no-store");
-    char header[144];const int header_size=std::snprintf(header,sizeof(header),"{\"ready\":true,\"source\":\"sd_history\",\"resolution\":\"%s\",\"buckets\":[",resolution);httpd_resp_send_chunk(req,header,header_size);
-    char j[288];for(std::size_t i=0;i<a.count;i++){const auto&b=a.buckets[i];double total=b.energy_kwh[0]+b.energy_kwh[1]+b.energy_kwh[2];int n=std::snprintf(j,sizeof(j),"%s{\"start_epoch_s\":%lld,\"present\":%s,\"energy_kwh\":[%.9f,%.9f,%.9f],\"total_kwh\":%.9f}",i?",":"",(long long)b.start_epoch_s,b.present?"true":"false",b.energy_kwh[0],b.energy_kwh[1],b.energy_kwh[2],total);httpd_resp_send_chunk(req,j,n);}httpd_resp_send_chunk(req,"]}",2);return httpd_resp_send_chunk(req,nullptr,0);
-}
-
-esp_err_t energy_series_handler(httpd_req_t*req){
-    char query[96]={},from_text[24]={},to_text[24]={};if(httpd_req_get_url_query_str(req,query,sizeof(query))!=ESP_OK||httpd_query_key_value(query,"from",from_text,sizeof(from_text))!=ESP_OK||httpd_query_key_value(query,"to",to_text,sizeof(to_text))!=ESP_OK){httpd_resp_set_status(req,"400 Bad Request");return httpd_resp_sendstr(req,"{\"ready\":false,\"error\":\"from_and_to_required\"}");}
-    SdEnergySeries series{};const auto from=std::strtoll(from_text,nullptr,10),to=std::strtoll(to_text,nullptr,10);if(sd_store_energy_series(from,to,series)!=ESP_OK){httpd_resp_set_status(req,"503 Service Unavailable");return httpd_resp_sendstr(req,"{\"ready\":false,\"error\":\"storage_unavailable\"}");}
-    httpd_resp_set_type(req,"application/json");httpd_resp_set_hdr(req,"Cache-Control","no-store");httpd_resp_send_chunk(req,"{\"ready\":true,\"source\":\"sd_history\",\"samples\":[",HTTPD_RESP_USE_STRLEN);char json[192];for(std::size_t i=0;i<series.count;i++){const auto&s=series.samples[i];const double total=s.energy_kwh[0]+s.energy_kwh[1]+s.energy_kwh[2];const int n=std::snprintf(json,sizeof(json),"%s{\"epoch_s\":%lld,\"energy_kwh\":[%.9f,%.9f,%.9f],\"total_kwh\":%.9f}",i?",":"",(long long)s.epoch_s,s.energy_kwh[0],s.energy_kwh[1],s.energy_kwh[2],total);httpd_resp_send_chunk(req,json,n);}httpd_resp_send_chunk(req,"]}",2);return httpd_resp_send_chunk(req,nullptr,0);
+    char header[256];const int header_size=std::snprintf(header,sizeof(header),"{\"ready\":true,\"source\":\"sd_history\",\"resolution\":\"%s\",\"schema\":[\"epoch_s\",\"present\",\"L1_kWh\",\"L2_kWh\",\"L3_kWh\",\"L1_W\",\"L2_W\",\"L3_W\",\"L1_Hz\",\"L2_Hz\",\"L3_Hz\"],\"points\":[",resolution);ESP_RETURN_ON_ERROR(httpd_resp_send_chunk(req,header,header_size),kTag,"aggregate header");
+    std::array<char,2048> chunk{};std::size_t used=0;char item[256];for(std::size_t i=0;i<a->count;i++){const auto&b=a->buckets[i];int n=std::snprintf(item,sizeof(item),"%s[%lld,%d,%.6f,%.6f,%.6f,%.1f,%.1f,%.1f,%.3f,%.3f,%.3f]",i?",":"",(long long)b.start_epoch_s,b.present?1:0,b.energy_kwh[0],b.energy_kwh[1],b.energy_kwh[2],b.active_power_w[0],b.active_power_w[1],b.active_power_w[2],b.frequency_hz[0],b.frequency_hz[1],b.frequency_hz[2]);if(n<0||static_cast<std::size_t>(n)>=sizeof(item))return ESP_FAIL;if(used+static_cast<std::size_t>(n)>chunk.size()){ESP_RETURN_ON_ERROR(httpd_resp_send_chunk(req,chunk.data(),used),kTag,"aggregate block");used=0;}std::memcpy(chunk.data()+used,item,n);used+=static_cast<std::size_t>(n);}if(used)ESP_RETURN_ON_ERROR(httpd_resp_send_chunk(req,chunk.data(),used),kTag,"aggregate block");ESP_RETURN_ON_ERROR(httpd_resp_send_chunk(req,"]}",2),kTag,"aggregate footer");return httpd_resp_send_chunk(req,nullptr,0);
 }
 
 esp_err_t export_handler(httpd_req_t*req){FILE*f=std::fopen(sd_store_csv_path(),"rb");if(!f)return httpd_resp_send_404(req);httpd_resp_set_type(req,"text/csv; charset=utf-8");httpd_resp_set_hdr(req,"Content-Disposition","attachment; filename=energy_history.csv");char block[2048];esp_err_t result=ESP_OK;while(true){size_t n=std::fread(block,1,sizeof(block),f);if(n&&httpd_resp_send_chunk(req,block,n)!=ESP_OK){result=ESP_FAIL;break;}if(n<sizeof(block))break;}std::fclose(f);if(result==ESP_OK)return httpd_resp_send_chunk(req,nullptr,0);return result;}
@@ -200,7 +200,6 @@ esp_err_t start_web_ui() {
     };
     const httpd_uri_t storage_status={.uri="/api/v1/storage/status",.method=HTTP_GET,.handler=storage_status_handler,.user_ctx=nullptr};
     const httpd_uri_t aggregate={.uri="/api/v1/history/aggregate",.method=HTTP_GET,.handler=aggregate_handler,.user_ctx=nullptr};
-    const httpd_uri_t energy_series={.uri="/api/v1/history/energy-series",.method=HTTP_GET,.handler=energy_series_handler,.user_ctx=nullptr};
     const httpd_uri_t export_csv={.uri="/api/v1/history/export",.method=HTTP_GET,.handler=export_handler,.user_ctx=nullptr};
     ESP_RETURN_ON_ERROR(httpd_register_uri_handler(server, &root), kTag, "Root registration failed");
     ESP_RETURN_ON_ERROR(
@@ -211,7 +210,6 @@ esp_err_t start_web_ui() {
     ESP_RETURN_ON_ERROR(httpd_register_uri_handler(server, &waveform), kTag, "Waveform registration failed");
     ESP_RETURN_ON_ERROR(httpd_register_uri_handler(server,&storage_status),kTag,"Storage status registration failed");
     ESP_RETURN_ON_ERROR(httpd_register_uri_handler(server,&aggregate),kTag,"Aggregate registration failed");
-    ESP_RETURN_ON_ERROR(httpd_register_uri_handler(server,&energy_series),kTag,"Energy series registration failed");
     ESP_RETURN_ON_ERROR(httpd_register_uri_handler(server,&export_csv),kTag,"Export registration failed");
     ESP_LOGI(kTag, "Dashboard ready on port 80");
     return ESP_OK;
