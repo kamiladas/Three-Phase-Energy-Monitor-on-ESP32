@@ -5,7 +5,7 @@
 #include <array>
 namespace em {
 struct SdStoreStats { bool mounted{}; std::uint64_t written{}; std::uint64_t dropped{}; std::uint64_t write_errors{}; };
-struct SdEnergyBucket { bool present{}; std::uint64_t start_us{}; std::int64_t start_epoch_s{}; std::array<double,3> energy_kwh{}; std::array<double,3> active_power_w{}; std::array<double,3> frequency_hz{}; std::uint32_t measurement_count{}; };
+struct SdEnergyBucket { bool present{}; std::uint64_t start_us{}; std::int64_t start_epoch_s{}; std::array<double,3> energy_kwh{}; std::array<double,3> active_power_w{}; std::array<double,3> frequency_hz{}; std::array<double,3> voltage_rms_v{}; std::array<double,3> current_rms_a{}; std::uint32_t measurement_count{}; };
 struct SdEnergyAggregate { static constexpr std::size_t kMaxBuckets=300; std::array<SdEnergyBucket,kMaxBuckets> buckets{}; std::size_t count{}; std::uint64_t range_us{}; };
 enum class SdAggregationResolution : std::uint8_t { five_minute, hour, three_hour, day, month };
 esp_err_t start_sd_store();

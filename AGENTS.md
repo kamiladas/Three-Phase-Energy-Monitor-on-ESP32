@@ -20,7 +20,17 @@ Jedna zmiana filtra oznacza jedno żądanie zakresu historii. Po otrzymaniu dany
 
 Pionowy dymek `kWh → czas osiągnięcia` działa dla dnia, tygodnia i miesiąca, dla L1/L2/L3 oraz sumy. Pokazuje pierwszy rzeczywiście otrzymany agregat osiągający poziom; nie interpoluje czasu. Klikalna legenda jest jedynym przełącznikiem widoczności serii.
 
-Selektor statystyk udostępnia energię `[kWh]`, średnią moc czynną `[W]` i średnią częstotliwość `[Hz]`. Częstotliwości faz nie sumuje się.
+Selektor statystyk udostępnia energię `[kWh]`, średnią moc czynną `[W]`, napięcie RMS `[V]`, prąd RMS `[A]` i średnią częstotliwość `[Hz]`. Napięć, prądów ani częstotliwości faz nie sumuje się.
+
+## Oscyloskop i częstotliwość
+
+- Widok historii `Hz` przedstawia częstotliwość w czasie, dlatego jego oś Y ma jednostkę Hz.
+- Hz nie jest jednostką amplitudy przebiegu. Dolny oscyloskop w widoku Hz pokazuje napięcie chwilowe używane do detekcji okresu; osie mają jednostki `ms/div` i `V/div`.
+- Widok `Napięcie RMS [V]` pokazuje historię Vrms oraz bieżący przebieg napięcia z regulowanym `V/div`.
+- Widok `Prąd RMS [A]` pokazuje historię Irms oraz bieżący przebieg prądu z regulowanym `A/div`.
+- Frontend oblicza Vrms/Irms wyświetlane przy oscyloskopie z otrzymanego krótkiego bloku próbek oraz wyznacza diagnostyczne Hz z dodatnich przejść napięcia przez zero.
+- Dostępne są fazy L1/L2/L3, automatyczna lub ręczna skala amplitudy oraz `2/5/10 ms/div`.
+- Oscyloskop korzysta z `/api/v1/waveform` i krótkiego bufora RAM. Nie rekonstruuje sinusa z samego Hz i nie zapisuje ciągłego strumienia ADC na SD.
 
 ## Historia SD
 
