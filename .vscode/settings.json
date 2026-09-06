@@ -1,0 +1,8 @@
+{
+  "idf.eimIdfJsonPath": "C:\\Espressif\\tools\\eim_idf.json",
+  "idf.currentSetup": "C:\\Espressif\\v6.0\\esp-idf",
+  "idf.target": "esp32",
+  "task.allowAutomaticTasks": "on",
+  "files.encoding": "utf8"
+}
+

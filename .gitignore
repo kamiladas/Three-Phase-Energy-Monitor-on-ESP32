@@ -1,0 +1,16 @@
+# ESP-IDF and CMake build output
+/build/
+/host_tests/build/
+/host_tests/build-*/
+
+# Local VS Code profiles created for the emulator workspace
+/.vscode-user/
+/.vscode-user-web/
+
+# Local/editor and generated files
+sdkconfig.old
+*.log
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db

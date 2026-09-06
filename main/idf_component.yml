@@ -1,0 +1,4 @@
+dependencies:
+  protocol_examples_common:
+    path: C:/Espressif/v6.0/esp-idf/examples/common_components/protocol_examples_common
+

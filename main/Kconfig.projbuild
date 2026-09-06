@@ -1,0 +1,16 @@
+menu "Energy Monitor"
+
+choice EM_SAMPLE_SOURCE
+    prompt "Sample source"
+    default EM_SAMPLE_SOURCE_SIM
+
+config EM_SAMPLE_SOURCE_SIM
+    bool "Deterministic simulator (QEMU)"
+
+config EM_SAMPLE_SOURCE_ADC
+    bool "ESP32 ADC1 continuous mode (hardware)"
+
+endchoice
+
+endmenu
+
